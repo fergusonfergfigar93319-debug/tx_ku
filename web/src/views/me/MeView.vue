@@ -59,7 +59,7 @@ async function confirmLogout() {
       <p class="me-intro__sub">账户与关系中心：资料、社区资产与私信；与「资讯只读」「广场 UGC」并列一域</p>
     </header>
 
-    <section class="profile-hero buddy-card-surface" aria-label="资料概览">
+    <section class="profile-hero" aria-label="资料概览">
       <div class="profile-hero__mesh" aria-hidden="true" />
       <div class="profile-hero__grid" aria-hidden="true" />
       <div class="profile-hero__stripe" aria-hidden="true" />
@@ -141,7 +141,7 @@ async function confirmLogout() {
       <h2 class="me-modules__heading">功能与服务</h2>
 
       <div class="me-modules__grid buddy-stagger-children">
-        <section class="me-panel buddy-card-surface">
+        <section class="me-panel">
           <h3 class="me-panel__title">
             <span class="me-panel__dot me-panel__dot--a" aria-hidden="true" />
             快捷入口
@@ -174,7 +174,7 @@ async function confirmLogout() {
           </div>
         </section>
 
-        <section class="me-panel buddy-card-surface">
+        <section class="me-panel">
           <h3 class="me-panel__title">
             <span class="me-panel__dot me-panel__dot--b" aria-hidden="true" />
             数字身份与资料
@@ -197,7 +197,7 @@ async function confirmLogout() {
           </ul>
         </section>
 
-        <section class="me-panel buddy-card-surface">
+        <section class="me-panel">
           <h3 class="me-panel__title">
             <span class="me-panel__dot me-panel__dot--c" aria-hidden="true" />
             社区与内容
@@ -220,7 +220,7 @@ async function confirmLogout() {
           </ul>
         </section>
 
-        <section class="me-panel buddy-card-surface">
+        <section class="me-panel">
           <h3 class="me-panel__title">
             <span class="me-panel__dot me-panel__dot--d" aria-hidden="true" />
             关系与消息
@@ -250,10 +250,12 @@ async function confirmLogout() {
           </ul>
         </section>
 
-        <section class="me-panel me-panel--danger buddy-card-surface">
-          <button type="button" class="me-logout" @click="confirmLogout">
-            <el-icon :size="20"><SwitchButton /></el-icon>
-            <span>退出登录</span>
+        <section class="me-panel me-panel--danger">
+          <button type="button" class="me-logout is-interactive" @click="confirmLogout">
+            <span class="me-logout__icon-wrap">
+              <el-icon :size="18"><SwitchButton /></el-icon>
+            </span>
+            <span class="me-logout__text">退出登录</span>
           </button>
         </section>
       </div>
@@ -265,55 +267,78 @@ async function confirmLogout() {
 
 <style scoped>
 .me--layout {
-  max-width: min(920px, 100%);
+  max-width: min(960px, 100%);
   margin: 0 auto;
+  padding-bottom: 40px;
 }
 
-/* 页头 */
+/* =========================================
+   页头标题区 (Header)
+========================================= */
 .me-intro {
-  margin-bottom: 18px;
-  padding-bottom: 4px;
+  margin-bottom: 24px;
+  padding-left: 4px;
 }
 
 .me-intro__eyebrow {
   margin: 0 0 6px;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-weight: 800;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--buddy-primary);
 }
 
 .me-intro__title {
   margin: 0 0 8px;
-  font-size: clamp(22px, 4.5vw, 28px);
+  font-size: clamp(24px, 5vw, 32px);
   font-weight: 800;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   line-height: 1.2;
-  background: linear-gradient(115deg, #0f172a 0%, #2563eb 42%, #7c3aed 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--buddy-text-primary, #0f172a);
 }
 
 .me-intro__sub {
   margin: 0;
   font-size: 14px;
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--buddy-text-muted);
+  max-width: 600px;
 }
 
-/* 资料卡：亮色层次 */
+/* 暗黑模式标题渐变重写 */
+html.dark .me-intro__title {
+  background: linear-gradient(115deg, #f8fafc 0%, #60a5fa 42%, #c084fc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* =========================================
+   个人资料大卡片 (Hero Card)
+========================================= */
 .profile-hero {
   position: relative;
   overflow: hidden;
-  margin-bottom: 22px;
-  padding: 0;
-  border: 1px solid rgba(37, 99, 235, 0.12);
-  background: var(--buddy-surface);
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 12px 40px rgba(15, 23, 42, 0.06);
+  margin-bottom: 32px;
+  border-radius: 24px; /* 更大的圆角，现代感更强 */
+  border: 1px solid rgba(37, 99, 235, 0.1);
+  background: var(--buddy-surface-elevated, #ffffff);
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-hero:hover {
+    transform: none;
+  }
+}
+
+.profile-hero:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px -15px rgba(37, 99, 235, 0.12);
 }
 
 .profile-hero__mesh {
@@ -321,56 +346,60 @@ async function confirmLogout() {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(100% 80% at 100% -30%, rgba(37, 99, 235, 0.09) 0%, transparent 55%),
-    radial-gradient(80% 70% at -10% 100%, rgba(124, 58, 237, 0.07) 0%, transparent 52%),
-    radial-gradient(60% 50% at 90% 90%, rgba(8, 145, 178, 0.05) 0%, transparent 45%),
-    linear-gradient(180deg, #ffffff 0%, #f8fafc 55%, #f1f5f9 100%);
+    radial-gradient(100% 80% at 100% -30%, rgba(37, 99, 235, 0.08) 0%, transparent 55%),
+    radial-gradient(80% 70% at -10% 100%, rgba(124, 58, 237, 0.06) 0%, transparent 52%);
 }
 
-/* 渐变网格纹理（优化方案 2.5） */
+html.dark .profile-hero__mesh {
+  opacity: 0.85;
+}
+
 .profile-hero__grid {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.45;
+  opacity: 0.35;
   background-image:
     repeating-linear-gradient(
       0deg,
       rgb(255 255 255 / 0.06) 0px,
       transparent 1px,
       transparent 36px,
-      rgb(255 255 255 / 0.05) 37px
+      rgb(255 255 255 / 0.04) 37px
     ),
     repeating-linear-gradient(
       90deg,
       rgb(255 255 255 / 0.05) 0px,
       transparent 1px,
       transparent 36px,
-      rgb(255 255 255 / 0.05) 37px
+      rgb(255 255 255 / 0.04) 37px
     );
   mix-blend-mode: soft-light;
 }
 
 .profile-hero__stripe {
-  position: relative;
-  height: 4px;
-  background: var(--buddy-gradient-brand);
-  box-shadow: 0 2px 12px rgba(37, 99, 235, 0.2);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
 }
 
 .profile-hero__body {
   position: relative;
   display: flex;
-  gap: 20px;
+  gap: 24px;
   align-items: flex-start;
-  padding: 22px 20px 24px;
+  padding: 32px 28px;
 }
 
-@media (max-width: 520px) {
+@media (max-width: 640px) {
   .profile-hero__body {
     flex-direction: column;
     align-items: center;
     text-align: center;
+    padding: 28px 20px;
   }
 
   .profile-hero__main {
@@ -391,82 +420,35 @@ async function confirmLogout() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .profile-hero__avatarRing {
   position: relative;
   display: inline-flex;
-  padding: 3px;
+  padding: 4px;
   border-radius: 50%;
-  z-index: 0;
-  box-shadow:
-    0 8px 24px rgba(37, 99, 235, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.9) inset;
-}
-
-/* 旋转光环（优化方案 2.5；静态 conic 改为伪元素动画） */
-.profile-hero__avatarRing::before {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    #fbbf24,
-    #f59e0b,
-    #ec4899,
-    #a855f7,
-    #2563eb,
-    #0891b2,
-    #fbbf24
-  );
-  z-index: -1;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .profile-hero__avatarRing::before {
-    animation: buddy-profile-avatar-ring 5s linear infinite;
-  }
-}
-
-@keyframes buddy-profile-avatar-ring {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .profile-hero__avatarRing::before {
-    background: conic-gradient(
-      from 200deg,
-      #2563eb,
-      #7c3aed,
-      #0891b2,
-      #16a34a,
-      #2563eb
-    );
-  }
+  background: linear-gradient(135deg, #60a5fa 0%, #c084fc 100%);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);
 }
 
 .profile-hero__avatar {
-  display: block;
-  border: 3px solid #fff !important;
-  font-weight: 700;
-  font-size: 28px !important;
-  background: linear-gradient(145deg, #f1f5f9 0%, #ffffff 100%) !important;
+  border: 4px solid var(--buddy-surface-elevated, #fff) !important;
+  font-weight: 800;
+  font-size: 32px !important;
   color: var(--buddy-primary) !important;
+  background: rgba(37, 99, 235, 0.08) !important;
 }
 
 .profile-hero__badge {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 4px 12px;
   border-radius: 999px;
   color: #fff;
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-  box-shadow: 0 2px 10px rgba(124, 58, 237, 0.22);
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
   white-space: nowrap;
 }
 
@@ -477,49 +459,53 @@ async function confirmLogout() {
 
 .profile-hero__name {
   margin: 0 0 6px;
-  font-size: clamp(20px, 4.5vw, 24px);
+  font-size: clamp(22px, 5vw, 28px);
   font-weight: 800;
-  letter-spacing: 0.02em;
-  line-height: 1.2;
-  color: var(--buddy-text);
+  color: var(--buddy-text, #0f172a);
 }
 
 .profile-hero__email {
-  margin: 0 0 8px;
+  margin: 0 0 12px;
   color: var(--buddy-text-muted);
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 
 .profile-hero__bio {
-  margin: 0 0 12px;
-  font-size: 13px;
-  line-height: 1.55;
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.6;
   color: var(--buddy-text-secondary);
 }
 
+/* AI 搭子入口 */
 .me-agent-sync {
   display: flex;
   align-items: center;
   gap: 10px;
   margin: 0 0 12px;
   padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: 14px;
   text-decoration: none;
   color: inherit;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.06) 0%, rgba(255, 255, 255, 0.95) 100%);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.07) 0%, rgba(255, 255, 255, 0.5) 100%);
   border: 1px solid rgba(37, 99, 235, 0.14);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
   transition:
-    background 0.15s ease,
-    box-shadow 0.15s ease,
-    border-color 0.15s ease;
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+html.dark .me-agent-sync {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(30, 41, 59, 0.45) 100%);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .me-agent-sync:hover {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, #ffffff 100%);
-  border-color: rgba(37, 99, 235, 0.22);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.25);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12);
 }
 
 .me-agent-sync__lab {
@@ -553,9 +539,9 @@ async function confirmLogout() {
   font-size: 13px;
   line-height: 1.55;
   color: var(--buddy-text-secondary);
-  border-radius: 12px;
-  background: #ffffff;
-  border: 1px solid var(--buddy-border);
+  border-radius: 14px;
+  background: var(--buddy-surface, #fff);
+  border: 1px solid rgba(148, 163, 184, 0.2);
   border-left: 3px solid var(--buddy-primary);
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
   display: -webkit-box;
@@ -563,6 +549,11 @@ async function confirmLogout() {
   line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+html.dark .profile-hero__decl {
+  background: rgba(15, 23, 42, 0.45);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .profile-hero__games {
@@ -586,39 +577,30 @@ async function confirmLogout() {
   align-items: center;
 }
 
-.game-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--buddy-primary);
-  border-radius: 999px;
-  border: 1px solid rgba(37, 99, 235, 0.2);
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
-}
-
 .game-pill--more {
   cursor: pointer;
-  border-style: dashed;
-  color: var(--buddy-text-secondary);
-  background: var(--buddy-surface-elevated);
+  border-style: dashed !important;
+  color: var(--buddy-text-secondary) !important;
 }
 
 .game-pill--more:hover {
-  border-color: var(--buddy-primary);
-  color: var(--buddy-primary);
-  background: #fff;
+  border-color: rgba(37, 99, 235, 0.45) !important;
+  color: var(--buddy-primary) !important;
 }
 
 .profile-hero__cardTags {
   margin-top: 4px;
   padding: 14px 14px 16px;
-  border-radius: 12px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid var(--buddy-border);
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.95) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+html.dark .profile-hero__cardTags {
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(10px);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .profile-hero__cardTagsHead {
@@ -647,90 +629,127 @@ async function confirmLogout() {
   gap: 8px;
 }
 
+.tag-chip--0 {
+  color: #1d4ed8 !important;
+  background: rgba(37, 99, 235, 0.1) !important;
+  border-color: rgba(37, 99, 235, 0.25) !important;
+}
+
+.tag-chip--1 {
+  color: #6d28d9 !important;
+  background: rgba(124, 58, 237, 0.1) !important;
+  border-color: rgba(124, 58, 237, 0.22) !important;
+}
+
+.tag-chip--2 {
+  color: #0e7490 !important;
+  background: rgba(8, 145, 178, 0.12) !important;
+  border-color: rgba(8, 145, 178, 0.22) !important;
+}
+
+.tag-chip--3 {
+  color: #b45309 !important;
+  background: rgba(245, 158, 11, 0.14) !important;
+  border-color: rgba(245, 158, 11, 0.28) !important;
+}
+
+html.dark .tag-chip--0,
+html.dark .tag-chip--1,
+html.dark .tag-chip--2,
+html.dark .tag-chip--3 {
+  color: inherit !important;
+}
+
+/* =========================================
+   游戏标签与状态 (Pills & Tags)
+========================================= */
+.game-pill,
 .tag-chip {
   display: inline-flex;
   align-items: center;
-  padding: 6px 12px;
+  padding: 6px 14px;
   font-size: 12px;
   font-weight: 600;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  transition:
-    transform 0.15s,
-    box-shadow 0.15s;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: var(--buddy-surface-2, #f8fafc);
+  color: var(--buddy-text-secondary);
+  transition: all 0.2s ease;
 }
 
+.game-pill:hover,
 .tag-chip:hover {
-  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.4);
+  color: var(--buddy-primary);
+  transform: translateY(-2px);
+  background: var(--buddy-surface-elevated);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .game-pill:hover,
   .tag-chip:hover {
     transform: none;
   }
 }
 
-.tag-chip--0 {
-  color: #1d4ed8;
-  background: rgba(37, 99, 235, 0.08);
-  border-color: rgba(37, 99, 235, 0.2);
+html.dark .game-pill,
+html.dark .tag-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
-.tag-chip--1 {
-  color: #6d28d9;
-  background: rgba(124, 58, 237, 0.08);
-  border-color: rgba(124, 58, 237, 0.2);
-}
-
-.tag-chip--2 {
-  color: #0e7490;
-  background: rgba(8, 145, 178, 0.1);
-  border-color: rgba(8, 145, 178, 0.22);
-}
-
-.tag-chip--3 {
-  color: #b45309;
-  background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(245, 158, 11, 0.28);
-}
-
-/* 功能区块 */
+/* =========================================
+   Bento Box 小组件网格 (Widgets)
+========================================= */
 .me-modules__heading {
-  margin: 0 0 14px;
-  font-size: 15px;
+  margin: 0 0 16px 4px;
+  font-size: 16px;
   font-weight: 800;
-  letter-spacing: 0.04em;
   color: var(--buddy-text);
 }
 
 .me-modules__grid {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
 }
 
 @media (min-width: 640px) {
   .me-modules__grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    align-items: start;
-  }
-
-  .me-panel--danger {
-    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 .me-panel {
+  display: flex;
+  flex-direction: column;
   padding: 0;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  background: var(--buddy-surface-elevated, #ffffff);
+  box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: hidden;
-  border: 1px solid rgba(15, 23, 42, 0.07);
-  transition: box-shadow 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .me-panel:hover {
+    transform: none;
+  }
 }
 
 .me-panel:hover {
-  box-shadow: var(--buddy-shadow-card-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px -10px rgba(37, 99, 235, 0.15);
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+html.dark .me-panel {
+  background: rgba(30, 41, 59, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .me-panel__title {
@@ -738,13 +757,15 @@ async function confirmLogout() {
   align-items: center;
   gap: 10px;
   margin: 0;
-  padding: 12px 16px 10px;
-  font-size: 13px;
+  padding: 16px 20px 12px;
+  font-size: 14px;
   font-weight: 800;
-  letter-spacing: 0.06em;
   color: var(--buddy-text-secondary);
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.9) 0%, rgba(255, 255, 255, 0.5) 100%);
-  border-bottom: 1px solid var(--buddy-border);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+html.dark .me-panel__title {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
 .me-panel__dot {
@@ -774,40 +795,54 @@ async function confirmLogout() {
   box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.12);
 }
 
+/* =========================================
+   列表交互项 (Lists & Links)
+========================================= */
 .me-quick {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding: 4px 8px 10px;
+  padding: 8px;
+}
+.me-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
 }
 
-.me-quick__item {
+.me-list li + li {
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+html.dark .me-list li + li {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+.me-quick__item,
+.me-link {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 10px;
-  border-radius: 10px;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
   text-decoration: none;
-  color: inherit;
-  transition:
-    background 0.15s ease,
-    transform 0.15s ease;
+  color: var(--buddy-text);
+  transition: all 0.2s ease;
 }
 
-.me-quick__item:hover {
+.me-quick__item:hover,
+.me-link:hover {
   background: rgba(37, 99, 235, 0.06);
+  transform: scale(1.01);
 }
 
-.me-quick__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: linear-gradient(145deg, rgba(37, 99, 235, 0.1) 0%, rgba(255, 255, 255, 0.95) 100%);
-  color: var(--buddy-primary);
-  flex-shrink: 0;
+@media (prefers-reduced-motion: reduce) {
+  .me-quick__item:hover,
+  .me-link:hover {
+    transform: none;
+  }
+}
+
+html.dark .me-quick__item:hover,
+html.dark .me-link:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .me-quick__text {
@@ -818,58 +853,38 @@ async function confirmLogout() {
   gap: 2px;
 }
 
-.me-quick__label {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--buddy-text);
-}
-
-.me-quick__hint {
-  font-size: 12px;
-  color: var(--buddy-text-muted);
-}
-
 .me-quick__arrow {
   flex-shrink: 0;
   color: var(--buddy-text-muted);
-  opacity: 0.65;
+  opacity: 0.7;
 }
 
-.me-list {
-  list-style: none;
-  margin: 0;
-  padding: 6px 8px 10px;
-}
-
-.me-list li + li {
-  border-top: 1px solid rgba(15, 23, 42, 0.05);
-}
-
-.me-link {
+.me-quick__icon {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 10px;
-  border-radius: 10px;
-  text-decoration: none;
-  color: var(--buddy-text);
-  font-size: 14px;
-  font-weight: 600;
-  transition: background 0.15s ease;
-}
-
-.me-link:hover {
-  background: rgba(37, 99, 235, 0.05);
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--buddy-primary);
 }
 
 .me-link__ico {
-  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--buddy-text-secondary);
+  transition: color 0.2s ease;
+}
+
+.me-link:hover .me-link__ico {
   color: var(--buddy-primary);
 }
 
 .me-link__label {
   flex: 1;
   min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .me-link__arrow {
@@ -878,35 +893,73 @@ async function confirmLogout() {
   opacity: 0.55;
 }
 
+.me-quick__label,
+.me-link__label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.me-quick__hint {
+  display: block;
+  font-size: 12px;
+  color: var(--buddy-text-muted);
+  margin-top: 2px;
+}
+
+/* =========================================
+   注销按钮 (Logout Widget)
+========================================= */
 .me-panel--danger {
-  padding: 10px 12px 12px;
+  grid-column: 1 / -1;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .me-panel--danger:hover {
-  box-shadow: var(--buddy-shadow-card);
+  transform: none;
+  box-shadow: none;
 }
 
 .me-logout {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  padding: 12px 16px;
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  border-radius: 12px;
-  background: rgba(254, 242, 242, 0.6);
-  color: #dc2626;
-  font-size: 14px;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
+  transition: all 0.3s ease;
+}
+
+html.dark .me-logout {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
 }
 
 .me-logout:hover {
-  background: rgba(254, 226, 226, 0.95);
-  border-color: rgba(239, 68, 68, 0.4);
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -5px rgba(239, 68, 68, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .me-logout:hover {
+    transform: none;
+  }
+}
+
+.me-logout__icon-wrap {
+  display: flex;
+  align-items: center;
 }
 </style>

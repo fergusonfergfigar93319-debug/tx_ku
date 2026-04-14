@@ -5,6 +5,7 @@ import { ElMessage } from 'element-plus'
 import {
   ChatDotRound,
   ChatLineRound,
+  Loading,
   Menu,
   Monitor,
   Plus,
@@ -43,7 +44,12 @@ function excerptPreview(content?: string) {
 
 const list = ref<Post[]>([])
 const loading = ref(false)
+const loadingMore = ref(false)
+const finished = ref(false)
 const page = ref(1)
+
+/** 与 postsApi.getPosts 默认 size 一致，用于判断是否还有下一页 */
+const FORUM_PAGE_SIZE = 20
 
 const sortMode = ref<'recommend' | 'latest' | 'hot'>('recommend')
 const scenarioId = ref<string>('')
@@ -139,21 +145,46 @@ const squareStats = computed(() => ({
   pinned: list.value.filter((p) => p.pinned).length,
 }))
 
-async function load() {
-  loading.value = true
+async function load(isAppend = false) {
+  if (!isAppend) {
+    loading.value = true
+    finished.value = false
+    page.value = 1
+  } else {
+    loadingMore.value = true
+  }
+
   try {
     const r = await postsApi.getPosts({
       category: forum.category as ForumCategory | '',
       page: page.value,
+      size: FORUM_PAGE_SIZE,
       q: forum.keyword || undefined,
     })
     const visible = r.list.filter(isVisibleInPublicForum)
-    list.value = visible
+
+    if (isAppend) {
+      list.value.push(...visible)
+    } else {
+      list.value = visible
+    }
+
+    if (visible.length < FORUM_PAGE_SIZE) {
+      finished.value = true
+    }
   } catch {
-    list.value = []
+    if (!isAppend) list.value = []
+    finished.value = true
   } finally {
     loading.value = false
+    loadingMore.value = false
   }
+}
+
+function loadMore() {
+  if (loading.value || loadingMore.value || finished.value) return
+  page.value++
+  void load(true)
 }
 
 watch(
@@ -390,80 +421,115 @@ onBeforeUnmount(() => {
             </el-button>
           </div>
 
-      <div v-loading="loading && !list.length" class="forum-post-list buddy-stagger-children">
-        <el-card
-          v-for="p in displayedPosts"
-          :key="p.postId"
-          class="forum-post-card buddy-card-surface is-interactive"
-          :class="'forum-post-card--' + categoryMeta(p.category).tone"
-          :data-category="p.category"
-          shadow="never"
-          @click="open(p)"
-        >
-          <div class="forum-post-card__body">
-            <div class="forum-post-card__author">
-              <el-avatar class="forum-post-card__avatar" :size="36" :src="p.authorAvatarUrl || undefined">
-                {{ (p.authorNickname || '玩').slice(0, 1) }}
-              </el-avatar>
-              <div class="forum-post-card__who">
-                <div class="forum-post-card__name-row">
-                  <span class="forum-post-card__name">{{ p.authorNickname || '玩家' }}</span>
-                  <span v-if="p.pinned" class="forum-post-card__pin">置顶</span>
-                </div>
-                <div class="forum-post-card__meta-line">
-                  <span class="forum-type-pill">
-                    <el-icon class="forum-type-pill__ico" :size="14">
-                      <component :is="categoryMeta(p.category).icon" />
-                    </el-icon>
-                    {{ categoryMeta(p.category).label }}
-                  </span>
-                  <span v-if="fmtPostDate(p.createdAt)" class="forum-post-card__date">{{
-                    fmtPostDate(p.createdAt)
-                  }}</span>
+      <div
+        class="forum-post-list buddy-stagger-children"
+        v-infinite-scroll="loadMore"
+        :infinite-scroll-disabled="loading || loadingMore || finished"
+        :infinite-scroll-distance="100"
+      >
+        <template v-if="loading && !list.length">
+          <el-card
+            v-for="i in 4"
+            :key="'skel-' + i"
+            class="forum-post-card buddy-card-surface forum-post-card--skeleton"
+            shadow="never"
+          >
+            <div style="padding: 14px">
+              <el-skeleton animated>
+                <template #template>
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px">
+                    <el-skeleton-item variant="circle" style="width: 36px; height: 36px" />
+                    <div style="display: flex; flex-direction: column; gap: 4px; flex: 1">
+                      <el-skeleton-item variant="text" style="width: 30%" />
+                      <el-skeleton-item variant="text" style="width: 20%" />
+                    </div>
+                  </div>
+                  <el-skeleton-item variant="h3" style="width: 60%; margin-bottom: 8px" />
+                  <el-skeleton-item variant="text" style="margin-bottom: 4px" />
+                  <el-skeleton-item variant="text" style="width: 80%; margin-bottom: 12px" />
+                  <el-skeleton-item variant="image" style="width: 100%; height: 120px; border-radius: 10px" />
+                </template>
+              </el-skeleton>
+            </div>
+          </el-card>
+        </template>
+
+        <template v-else>
+          <el-card
+            v-for="p in displayedPosts"
+            :key="p.postId"
+            class="forum-post-card buddy-card-surface is-interactive"
+            :class="'forum-post-card--' + categoryMeta(p.category).tone"
+            :data-category="p.category"
+            shadow="never"
+            @click="open(p)"
+          >
+            <div class="forum-post-card__body">
+              <div class="forum-post-card__author">
+                <el-avatar class="forum-post-card__avatar" :size="36" :src="p.authorAvatarUrl || undefined">
+                  {{ (p.authorNickname || '玩').slice(0, 1) }}
+                </el-avatar>
+                <div class="forum-post-card__who">
+                  <div class="forum-post-card__name-row">
+                    <span class="forum-post-card__name">{{ p.authorNickname || '玩家' }}</span>
+                    <span v-if="p.pinned" class="forum-post-card__pin">置顶</span>
+                  </div>
+                  <div class="forum-post-card__meta-line">
+                    <span class="forum-type-pill">
+                      <el-icon class="forum-type-pill__ico" :size="14">
+                        <component :is="categoryMeta(p.category).icon" />
+                      </el-icon>
+                      {{ categoryMeta(p.category).label }}
+                    </span>
+                    <span v-if="fmtPostDate(p.createdAt)" class="forum-post-card__date">{{
+                      fmtPostDate(p.createdAt)
+                    }}</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <h3 class="forum-post-card__title clamp-2">{{ p.title }}</h3>
-            <p class="forum-post-card__excerpt">
-              {{ excerptPreview(p.content) }}
-            </p>
+              <h3 class="forum-post-card__title clamp-2">{{ p.title }}</h3>
+              <p class="forum-post-card__excerpt">
+                {{ excerptPreview(p.content) }}
+              </p>
 
-            <div v-if="p.mediaAttachments?.[0]" class="forum-post-card__media">
-              <div class="forum-post-card__media-frame">
-                <img :src="p.mediaAttachments[0]" alt="" loading="lazy" decoding="async" />
-                <span
-                  v-if="(p.mediaAttachments?.length ?? 0) > 1"
-                  class="forum-post-card__media-more"
-                  aria-label="更多配图"
-                  >+{{ (p.mediaAttachments?.length ?? 0) - 1 }}</span
-                >
+              <div v-if="p.mediaAttachments?.[0]" class="forum-post-card__media">
+                <div class="forum-post-card__media-frame">
+                  <img :src="p.mediaAttachments[0]" alt="" loading="lazy" decoding="async" />
+                  <span
+                    v-if="(p.mediaAttachments?.length ?? 0) > 1"
+                    class="forum-post-card__media-more"
+                    aria-label="更多配图"
+                    >+{{ (p.mediaAttachments?.length ?? 0) - 1 }}</span
+                  >
+                </div>
+              </div>
+
+              <div v-if="p.tags?.length" class="forum-post-card__tags">
+                <span v-for="tag in p.tags" :key="tag" class="forum-post-tag">{{ tag }}</span>
+              </div>
+
+              <div class="forum-post-card__actions" @click.stop>
+                <button type="button" class="forum-action" @click="onLike($event, p)">
+                  <el-icon :size="18"><Star /></el-icon>
+                  <span>{{ p.likeCount ?? 0 }}</span>
+                </button>
+                <button type="button" class="forum-action" @click="openComments($event, p)">
+                  <el-icon :size="18"><ChatLineRound /></el-icon>
+                  <span>{{ p.commentCount ?? 0 }}</span>
+                </button>
+                <button type="button" class="forum-action" @click="sharePost($event, p)">
+                  <el-icon :size="18"><Share /></el-icon>
+                  <span>分享</span>
+                </button>
               </div>
             </div>
-
-            <div v-if="p.tags?.length" class="forum-post-card__tags">
-              <span v-for="tag in p.tags" :key="tag" class="forum-post-tag">{{ tag }}</span>
-            </div>
-
-            <div class="forum-post-card__actions" @click.stop>
-              <button type="button" class="forum-action" @click="onLike($event, p)">
-                <el-icon :size="18"><Star /></el-icon>
-                <span>{{ p.likeCount ?? 0 }}</span>
-              </button>
-              <button type="button" class="forum-action" @click="openComments($event, p)">
-                <el-icon :size="18"><ChatLineRound /></el-icon>
-                <span>{{ p.commentCount ?? 0 }}</span>
-              </button>
-              <button type="button" class="forum-action" @click="sharePost($event, p)">
-                <el-icon :size="18"><Share /></el-icon>
-                <span>分享</span>
-              </button>
-            </div>
-          </div>
-        </el-card>
+          </el-card>
+        </template>
 
         <BuddyEmptyState
           v-if="!loading && !displayedPosts.length"
+          class="forum-feed-span-all"
           :title="list.length ? '当前筛选下暂无帖子' : '暂无帖子'"
           :description="
             list.length
@@ -479,6 +545,14 @@ onBeforeUnmount(() => {
             </el-icon>
           </template>
         </BuddyEmptyState>
+
+        <div v-if="loadingMore" class="forum-feed-bottom">
+          <el-icon class="is-loading"><Loading /></el-icon>
+          <span>正在加载更多帖子...</span>
+        </div>
+        <div v-if="finished && list.length && !loading" class="forum-feed-bottom">
+          <span>— 已经到底啦 —</span>
+        </div>
       </div>
         </div>
       </section>
@@ -1009,15 +1083,59 @@ onBeforeUnmount(() => {
 }
 
 .forum-post-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-items: start;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 640px) {
   .forum-post-list {
-    gap: 12px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
   }
+}
+
+@media (min-width: 1100px) {
+  .forum-post-list {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+
+.forum-feed-span-all {
+  grid-column: 1 / -1;
+}
+
+.forum-feed-bottom {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 0 32px;
+  color: var(--buddy-text-muted);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+}
+
+.forum-feed-bottom .is-loading {
+  font-size: 16px;
+}
+
+.forum-post-card--skeleton {
+  cursor: default;
+  pointer-events: none;
+}
+
+.forum-post-card--skeleton::before {
+  display: none;
+}
+
+.forum-post-card--skeleton:hover {
+  transform: none;
+  border-color: rgba(99, 112, 140, 0.1) !important;
+  box-shadow: var(--buddy-shadow-card) !important;
 }
 
 .forum-post-card {

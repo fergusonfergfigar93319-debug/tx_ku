@@ -100,7 +100,7 @@ const mouthIsEllipse = computed(() => d.value.mouthStyle === 2)
 
 <template>
   <div
-    class="agent-chibi"
+    class="agent-chibi agent-chibi--breathing"
     :style="{ width: `${size}px`, height: `${size}px` }"
     role="img"
     :aria-label="`Q版峡谷形象 · ${d.laneArchetype}`"
@@ -269,5 +269,28 @@ const mouthIsEllipse = computed(() => d.value.mouthStyle === 2)
 .agent-chibi__svg {
   display: block;
   overflow: visible;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .agent-chibi--breathing {
+    animation: chibi-breathe 4.2s ease-in-out infinite;
+    transform-origin: center center;
+  }
+}
+
+@keyframes chibi-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.045);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-chibi--breathing {
+    animation: none;
+  }
 }
 </style>

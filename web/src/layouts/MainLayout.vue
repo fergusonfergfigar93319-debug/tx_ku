@@ -14,8 +14,10 @@ import {
   Grid,
   HomeFilled,
   Menu,
+  Moon,
   Opportunity,
   Search,
+  Sunny,
   User,
 } from '@element-plus/icons-vue'
 import BuddyBackButton from '@/components/buddy/BuddyBackButton.vue'
@@ -174,7 +176,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="main-shell" :data-app-module="appModule.id">
+  <div class="main-shell buddy-app-container" :data-app-module="appModule.id">
     <a href="#main-content" class="skip-to-main">跳到主要内容</a>
     <header class="app-header app-header--glass" aria-label="站点主导航">
       <div class="header-inner">
@@ -215,6 +217,16 @@ onBeforeUnmount(() => {
           </nav>
 
           <div class="header-end">
+            <el-button
+              class="header-theme"
+              text
+              circle
+              :title="ui.isDark ? '切换为浅色' : '切换为暗黑'"
+              :aria-label="ui.isDark ? '切换为浅色' : '切换为暗黑'"
+              @click="ui.toggleDark()"
+            >
+              <el-icon :size="20"><Moon v-if="!ui.isDark" /><Sunny v-else /></el-icon>
+            </el-button>
             <el-button
               class="header-cmd"
               text
@@ -290,12 +302,14 @@ onBeforeUnmount(() => {
       </span>
     </div>
 
-    <main class="main-body main-body--web-canvas app-workspace" id="main-content">
-      <router-view v-slot="{ Component }">
-        <transition name="buddy-route" mode="out-in">
-          <component :is="Component" :key="route.fullPath" />
-        </transition>
-      </router-view>
+    <main class="main-body main-body--web-canvas main-body--app-tab app-workspace" id="main-content">
+      <div class="main-route-fade-slide-wrap">
+        <router-view v-slot="{ Component }">
+          <transition name="fade-slide" mode="out-in">
+            <component :is="Component" :key="route.fullPath" />
+          </transition>
+        </router-view>
+      </div>
     </main>
 
     <footer class="site-footer" aria-label="页脚">
@@ -345,6 +359,21 @@ onBeforeUnmount(() => {
         </button>
       </div>
     </el-drawer>
+
+    <nav class="mobile-tabbar" aria-label="主导航">
+      <button
+        v-for="t in tabs"
+        :key="'mb-' + t.name"
+        type="button"
+        class="mobile-tabbar__item"
+        :class="{ 'is-active': tabActive(t.name) }"
+        :aria-current="tabActive(t.name) ? 'page' : undefined"
+        @click="navigate(t.path)"
+      >
+        <el-icon :size="22"><component :is="t.icon" /></el-icon>
+        <span class="mobile-tabbar__label">{{ t.label }}</span>
+      </button>
+    </nav>
   </div>
 </template>
 
@@ -353,6 +382,17 @@ onBeforeUnmount(() => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* 主工作区浅暖渐变底，打破纯白（与首页氛围一致） */
+.buddy-app-container {
+  background: radial-gradient(circle at 100% 0%, rgb(253 252 251 / 0.9) 0%, transparent 42%),
+    radial-gradient(circle at 0% 0%, rgb(239 246 255 / 0.75) 0%, transparent 38%),
+    var(--buddy-page-bg);
+}
+
+:global(html.dark) .buddy-app-container {
+  background: var(--buddy-page-bg);
 }
 
 .skip-to-main {
@@ -390,20 +430,18 @@ onBeforeUnmount(() => {
   text-decoration: none;
 }
 
-/* Glassmorphism 顶栏（优化方案 2.1） */
+/* Glassmorphism 顶栏（Design Tokens：buddy-glass-*） */
 .app-header--glass {
   position: sticky;
   top: 0;
   z-index: 100;
   flex-shrink: 0;
   color: var(--buddy-header-text);
-  background: rgb(255 255 255 / 0.72);
-  backdrop-filter: saturate(185%) blur(20px);
-  -webkit-backdrop-filter: saturate(185%) blur(20px);
-  border-bottom: 1px solid transparent;
-  box-shadow:
-    0 4px 24px rgb(15 23 42 / 0.08),
-    0 0 0 1px rgb(255 255 255 / 0.1) inset;
+  background: var(--buddy-glass-bg);
+  backdrop-filter: var(--buddy-glass-blur);
+  -webkit-backdrop-filter: var(--buddy-glass-blur);
+  border-bottom: var(--buddy-glass-border);
+  box-shadow: var(--buddy-glass-shadow);
   transition:
     box-shadow var(--buddy-duration-sm) var(--buddy-ease-out),
     background var(--buddy-duration-sm) var(--buddy-ease-out);
@@ -785,6 +823,12 @@ onBeforeUnmount(() => {
   position: relative;
 }
 
+/* 内层路由过渡：为 fade-slide 离场 position:absolute 提供定位上下文 */
+.main-route-fade-slide-wrap {
+  position: relative;
+  width: 100%;
+}
+
 /* 大屏 Web：弱网格 + 斜向微光（峡谷地图式秩序感），仅桌面启用 */
 .main-body--web-canvas::before {
   content: '';
@@ -873,6 +917,91 @@ onBeforeUnmount(() => {
 
 .header-cmd {
   color: var(--buddy-text-secondary) !important;
+}
+
+.header-theme {
+  color: var(--buddy-text-secondary) !important;
+}
+
+/* 移动端：底部 Tab（≥768px 沿用顶栏导航） */
+.mobile-tabbar {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .nav-mobile-btn {
+    display: none !important;
+  }
+
+  .main-body--app-tab {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mobile-tabbar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 120;
+    padding: 6px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+    gap: 4px;
+    justify-content: space-around;
+    align-items: stretch;
+    background: var(--buddy-glass-bg);
+    backdrop-filter: var(--buddy-glass-blur);
+    -webkit-backdrop-filter: var(--buddy-glass-blur);
+    border-top: var(--buddy-glass-border);
+    box-shadow: 0 -4px 24px rgb(15 23 42 / 0.08);
+  }
+
+  .mobile-tabbar__item {
+    flex: 1;
+    flex-direction: column;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+    padding: 6px 4px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--buddy-text-muted);
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+      color 0.2s ease,
+      background 0.2s ease,
+      transform 0.2s var(--buddy-ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1));
+  }
+
+  .mobile-tabbar__item:active {
+    transform: scale(0.96);
+  }
+
+  .mobile-tabbar__item.is-active {
+    color: #1d4ed8;
+    background: rgb(var(--buddy-rgb-brand) / 0.1);
+  }
+
+  :global(html.dark) .mobile-tabbar__item.is-active {
+    color: #93c5fd;
+  }
+
+  .mobile-tabbar__label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-tabbar__item:active {
+    transform: none;
+  }
 }
 
 .site-footer-link,

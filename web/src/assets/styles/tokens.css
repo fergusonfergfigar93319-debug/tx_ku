@@ -151,7 +151,22 @@
 
   --buddy-radius: 14px;
   --buddy-radius-sm: 10px;
+  /* 现代圆角规范（毛玻璃 / 大卡片） */
+  --buddy-radius-lg: 16px;
+  --buddy-radius-xl: 24px;
   --buddy-space: 16px;
+
+  /* 方案：质感渐变与通透阴影（与品牌轴并存） */
+  --buddy-gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --buddy-shadow-soft:
+    0 10px 25px -5px rgb(15 23 42 / 0.06),
+    0 8px 10px -6px rgb(15 23 42 / 0.05);
+
+  /* 毛玻璃（顶栏 / 侧栏 / 浮层） */
+  --buddy-glass-bg: rgb(255 255 255 / 0.72);
+  --buddy-glass-blur: blur(14px) saturate(165%);
+  --buddy-glass-border: 1px solid rgb(255 255 255 / 0.38);
+  --buddy-glass-shadow: 0 8px 32px rgb(30 58 138 / 0.08);
 
   /* 动效：时长与曲线（全站统一） */
   --buddy-duration-instant: 0.1s;
@@ -667,4 +682,74 @@ body.buddy-app ::selection {
   .buddy-link-drama:hover {
     letter-spacing: inherit;
   }
+}
+
+/* —— 暗黑模式：与 Element Plus dark/css-vars 协同，深邃灰蓝 + 品牌倾向 —— */
+html.dark {
+  color-scheme: dark;
+
+  /* 背景：带蓝紫倾向的夜空色，避免纯黑 */
+  --bg-color: #0f172a;
+  --buddy-page-bg: #0f172a;
+  --buddy-page-bg-alt: #1e293b;
+  --buddy-surface: #1e293b;
+  --buddy-surface-elevated: #1e293b;
+  --buddy-surface-2: #1e293b;
+
+  --text-color-primary: #f8fafc;
+  --text-color-secondary: #94a3b8;
+  --buddy-text: #f8fafc;
+  --buddy-text-secondary: #94a3b8;
+  --buddy-text-muted: #94a3b8;
+  --buddy-header-text: #f8fafc;
+
+  --buddy-border: rgba(255, 255, 255, 0.1);
+  --buddy-glass-bg: rgba(15, 23, 42, 0.75);
+  --buddy-glass-blur: blur(16px) saturate(160%);
+  --buddy-glass-border: 1px solid rgba(255, 255, 255, 0.08);
+  --buddy-glass-shadow: 0 8px 32px rgb(0 0 0 / 0.35);
+
+  /* 与毛玻璃工具类、旧引用兼容 */
+  --glass-bg: rgba(15, 23, 42, 0.75);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+
+  --buddy-shadow-soft:
+    0 10px 28px rgb(0 0 0 / 0.35),
+    0 0 0 1px rgb(255 255 255 / 0.04) inset;
+
+  /* Element Plus 暗色基底 */
+  --el-bg-color: #0f172a;
+  --el-bg-color-overlay: #1e293b;
+  --el-text-color-primary: #f8fafc;
+  --el-border-color: rgba(255, 255, 255, 0.1);
+  --el-fill-color-blank: #1e293b;
+}
+
+html.dark body.buddy-app {
+  background-color: var(--buddy-page-bg);
+  background-image:
+    radial-gradient(100% 85% at 0% -8%, rgb(59 91 200 / 0.12), transparent 56%),
+    radial-gradient(92% 72% at 100% 2%, rgb(130 92 220 / 0.1), transparent 52%),
+    linear-gradient(180deg, #1e293b 0%, var(--buddy-page-bg) 48%, #0f172a 100%);
+}
+
+/* 主壳与布局容器：暗黑下径向渐变压暗 */
+html.dark .buddy-app-container {
+  background: radial-gradient(circle at top right, #1e293b 0%, #0f172a 100%);
+}
+
+html.dark .app-shell {
+  background: var(--buddy-page-bg);
+}
+
+/* 深浅切换时语义表面与玻璃更顺滑 */
+body.buddy-app,
+.buddy-card-surface,
+.forum-layer,
+.glass-panel {
+  transition:
+    background-color 0.4s ease,
+    color 0.4s ease,
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
 }

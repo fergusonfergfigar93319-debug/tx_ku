@@ -112,6 +112,8 @@ const forumPreview = mockPosts.slice(0, 4)
 
 .dp-page__swiper {
   margin-bottom: 8px;
+  /* 避免 app-page-stack 將首屏輪播壓成 0 高度（內層 Swiper 延遲量測時） */
+  flex-shrink: 0;
 }
 
 .dp-page::before {

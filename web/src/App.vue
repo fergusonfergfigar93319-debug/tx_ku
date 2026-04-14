@@ -1,13 +1,20 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { isMockApiEnabled } from '@/mock/config'
+import { useUiStore } from '@/stores/ui'
 
 const route = useRoute()
+const ui = useUiStore()
+
+watchEffect(() => {
+  document.documentElement.classList.toggle('dark', ui.isDark)
+  document.documentElement.style.colorScheme = ui.isDark ? 'dark' : 'light'
+})
 
 /**
  * 顶层路由过渡 key：/app 下全部使用同一 key，避免切换子页（含 AI 搭子）时销毁 MainLayout。
- * 登录/注册/引导等独立页用 path 区分，以触发与 MainLayout 同一套 buddy-route 动画。
+ * 登录/注册/引导等独立页用 path 区分，以触发与 MainLayout 同一套 fade-slide 动画。
  */
 const rootTransitionKey = computed(() => {
   if (route.path.startsWith('/app')) return 'shell-app'
@@ -21,11 +28,13 @@ const rootTransitionKey = computed(() => {
     <div v-if="isMockApiEnabled()" class="mock-strip" role="status">
       模拟数据模式已开启（VITE_USE_MOCK=true），未连接真实后端
     </div>
-    <router-view v-slot="{ Component }">
-      <transition name="buddy-route" mode="out-in">
-        <component :is="Component" :key="rootTransitionKey" />
-      </transition>
-    </router-view>
+    <div class="route-fade-slide-wrap">
+      <router-view v-slot="{ Component }">
+        <transition name="fade-slide" mode="out-in">
+          <component :is="Component" :key="rootTransitionKey" />
+        </transition>
+      </router-view>
+    </div>
   </div>
 </template>
 

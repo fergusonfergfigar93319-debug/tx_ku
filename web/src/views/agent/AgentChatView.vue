@@ -19,6 +19,46 @@ import {
   getAgentPresenceLine,
   getQuickPrompts,
 } from '@/utils/agentPersona'
+import MarkdownIt from 'markdown-it'
+import mdMultimdTable from 'markdown-it-multimd-table'
+import hljs from 'highlight.js'
+import 'highlight.js/styles/atom-one-dark.css'
+
+function escapeCodeFallback(str: string) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+const md: InstanceType<typeof MarkdownIt> = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true,
+  breaks: true,
+  highlight(str, lang): string {
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        return (
+          '<pre class="hljs"><code>' +
+          hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+          '</code></pre>'
+        )
+      } catch {
+        /* ignore */
+      }
+    }
+    return '<pre class="hljs"><code>' + escapeCodeFallback(str) + '</code></pre>'
+  },
+})
+md.use(mdMultimdTable)
+
+function renderMessage(text: string, isStreaming?: boolean) {
+  const rawText = text || ''
+  const appendCursor = isStreaming ? '<span class="stream-cursor"></span>' : ''
+  return md.render(rawText) + appendCursor
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -73,6 +113,35 @@ interface Msg {
   streaming?: boolean
 }
 
+/** 首屏历史：助手气泡打字机展示（非流式） */
+const assistantReveal = ref<Record<string, string>>({})
+let assistantRevealRan = false
+
+const TYPEWRITER_MS = 14
+
+function displayAssistantText(m: Msg): string {
+  if (m.role !== 'assistant') return m.text
+  if (m.streaming) return m.text
+  const r = assistantReveal.value[m.id]
+  return r !== undefined ? r : m.text
+}
+
+async function runAssistantTypewriters() {
+  const assistants = messages.value.filter((m) => m.role === 'assistant' && m.text.trim())
+  for (const m of assistants) {
+    const full = m.text
+    const chars = Array.from(full)
+    for (let i = 0; i <= chars.length; i++) {
+      assistantReveal.value[m.id] = chars.slice(0, i).join('')
+      await nextTick()
+      bottomRef.value?.scrollIntoView({ behavior: 'smooth' })
+      if (i < chars.length) {
+        await new Promise((r) => setTimeout(r, TYPEWRITER_MS))
+      }
+    }
+  }
+}
+
 const messages = ref<Msg[]>([])
 const input = ref('')
 const loading = ref(false)
@@ -110,6 +179,22 @@ async function loadHistory() {
         createdAt: new Date().toISOString(),
       },
     ]
+  }
+  if (!assistantRevealRan && messages.value.some((m) => m.role === 'assistant')) {
+    assistantRevealRan = true
+    const reduceMotion =
+      typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (reduceMotion) {
+      for (const m of messages.value) {
+        if (m.role === 'assistant') assistantReveal.value[m.id] = m.text
+      }
+    } else {
+      for (const m of messages.value) {
+        if (m.role === 'assistant') assistantReveal.value[m.id] = ''
+      }
+      await nextTick()
+      await runAssistantTypewriters()
+    }
   }
 }
 
@@ -340,11 +425,10 @@ onBeforeUnmount(() => {
                 <div class="msg-col">
                   <span v-if="m.createdAt" class="msg-time">{{ formatMsgTime(m.createdAt) }}</span>
                   <div
-                    class="bubble bubble--assistant"
+                    class="bubble bubble--assistant markdown-body"
                     :class="{ 'bubble--streaming': m.streaming }"
-                  >
-                    {{ m.text }}
-                  </div>
+                    v-html="renderMessage(displayAssistantText(m), m.streaming)"
+                  ></div>
                 </div>
               </div>
             </template>
@@ -968,6 +1052,141 @@ onBeforeUnmount(() => {
 @media (min-width: 1280px) {
   .agent-chat-root {
     max-width: 920px;
+  }
+}
+
+/* =========================================
+   Markdown 气泡内部样式优化
+========================================= */
+.bubble.markdown-body {
+  white-space: normal;
+}
+
+.markdown-body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--buddy-text-primary, #1e293b);
+}
+
+/* 消除段落多余边距 */
+.markdown-body :deep(p) {
+  margin: 0 0 10px 0;
+}
+.markdown-body :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+/* 列表样式 */
+.markdown-body :deep(ul),
+.markdown-body :deep(ol) {
+  margin: 0 0 10px 0;
+  padding-left: 20px;
+}
+.markdown-body :deep(li) {
+  margin-bottom: 4px;
+}
+
+/* 表格（markdown-it-multimd-table） */
+.markdown-body :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 13px;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgb(15 23 42 / 0.1);
+}
+.markdown-body :deep(th),
+.markdown-body :deep(td) {
+  border: 1px solid rgb(15 23 42 / 0.12);
+  padding: 8px 10px;
+  text-align: left;
+}
+.markdown-body :deep(th) {
+  background: rgb(15 23 42 / 0.04);
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* 行内代码（围栏块内由 pre 样式覆盖） */
+.markdown-body :deep(p code),
+.markdown-body :deep(li code),
+.markdown-body :deep(td code) {
+  background: rgb(15 23 42 / 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+  color: #c026d3;
+}
+
+.markdown-body :deep(pre.hljs code) {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* 代码块外层样式（重写 highlight.js 的基础边距） */
+.markdown-body :deep(pre.hljs) {
+  margin: 10px 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  background: #1e1e2e;
+  overflow-x: auto;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* 加粗、引用等 */
+.markdown-body :deep(strong) {
+  font-weight: 700;
+  color: #0f172a;
+}
+.markdown-body :deep(blockquote) {
+  margin: 10px 0;
+  padding-left: 12px;
+  border-left: 4px solid rgb(var(--buddy-rgb-brand) / 0.5);
+  color: var(--buddy-text-muted);
+  background: rgb(var(--buddy-rgb-brand) / 0.05);
+  padding: 8px 12px;
+  border-radius: 0 8px 8px 0;
+}
+
+/* =========================================
+   流式输出跟行光标（终极解决方案）
+========================================= */
+.bubble--streaming::after {
+  display: none !important;
+}
+
+.markdown-body :deep(.stream-cursor) {
+  display: inline-block;
+  width: 4px;
+  height: 1.2em;
+  background-color: rgb(var(--buddy-rgb-brand, 59 130 246));
+  vertical-align: -0.2em;
+  margin-left: 4px;
+  border-radius: 2px;
+  animation: agent-cursor-blink 0.8s steps(2, start) infinite;
+  box-shadow: 0 0 8px rgb(var(--buddy-rgb-brand) / 0.6);
+}
+
+@keyframes agent-cursor-blink {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markdown-body :deep(.stream-cursor) {
+    animation: none;
+    opacity: 0.85;
   }
 }
 </style>

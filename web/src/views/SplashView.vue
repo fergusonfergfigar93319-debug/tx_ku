@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Loading } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
@@ -9,7 +9,24 @@ import { isProfileComplete } from '@/utils/profile'
 const router = useRouter()
 const user = useUserStore()
 
+const lottieRef = ref<HTMLElement | null>(null)
+let lottieAnim: { destroy: () => void } | null = null
+
 onMounted(async () => {
+  try {
+    const lottie = (await import('lottie-web')).default
+    if (lottieRef.value) {
+      lottieAnim = lottie.loadAnimation({
+        container: lottieRef.value,
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: `${import.meta.env.BASE_URL}lottie/splash.json`,
+      })
+    }
+  } catch {
+    /* 无 Lottie 时保留下方 Loading 图标 */
+  }
   const delay = () => new Promise((r) => setTimeout(r, 1000))
   await delay()
 
@@ -38,6 +55,11 @@ onMounted(async () => {
 
   void router.replace('/app/home')
 })
+
+onBeforeUnmount(() => {
+  lottieAnim?.destroy()
+  lottieAnim = null
+})
 </script>
 
 <template>
@@ -47,7 +69,8 @@ onMounted(async () => {
       <h1 class="splash-title">元流同频</h1>
       <p class="sub">电竞 IP × 文旅 × 潮流 · 场景化 AI 体验</p>
       <p class="splash-tagline">峡谷工作台加载中…</p>
-      <el-icon class="spin" :size="36"><Loading /></el-icon>
+      <div ref="lottieRef" class="splash-lottie" aria-hidden="true" />
+      <el-icon class="spin splash-spin-fallback" :size="36"><Loading /></el-icon>
     </div>
   </div>
 </template>
@@ -173,10 +196,24 @@ onMounted(async () => {
   font-size: 14px;
 }
 
+.splash-lottie {
+  width: min(200px, 52vw);
+  height: min(200px, 52vw);
+  margin: 0 auto 16px;
+}
+
+.splash-spin-fallback {
+  margin-top: 8px;
+}
+
 .spin {
   animation: spin 1s linear infinite;
   color: var(--buddy-amber);
   filter: drop-shadow(0 0 8px rgb(var(--buddy-rgb-honor-gold) / 0.35));
+}
+
+.splash-lottie:not(:empty) + .splash-spin-fallback {
+  display: none;
 }
 
 @keyframes spin {

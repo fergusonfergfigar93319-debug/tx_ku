@@ -1,5 +1,5 @@
 <!--
-  HomeCardSwiper — 中间主卡、两侧露边（slidesPerView:auto + 缩放/透明度，不依赖 effect creative）
+  HomeCardSwiper — 中间主卡、两侧覆盖流（EffectCoverflow + slidesPerView:auto）
 
   依赖：npm install swiper@11
   说明：同目录 HomeCardSwiper-使用说明.md
@@ -8,11 +8,12 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Swiper, SwiperSlide } from 'swiper/vue'
-import { Autoplay, Pagination } from 'swiper/modules'
+import { Autoplay, EffectCoverflow, Pagination } from 'swiper/modules'
 import type { Swiper as SwiperClass } from 'swiper/types'
 
 import 'swiper/css'
 import 'swiper/css/pagination'
+import 'swiper/css/effect-coverflow'
 
 import type { HomeCardSwiperItem } from './homeCardSwiper.types'
 
@@ -34,7 +35,16 @@ const props = withDefaults(
   },
 )
 
-const modules = [Autoplay, Pagination]
+const modules = [EffectCoverflow, Autoplay, Pagination]
+
+/** Coverflow：由 stretch / depth 与自适应 slide 宽度填充大屏留白 */
+const coverflowEffectOpts = {
+  rotate: 5,
+  stretch: 180,
+  depth: 160,
+  modifier: 1,
+  slideShadows: false,
+} as const
 
 /** 实例由 @swiper 注入；左右箭头改为手动调用 slidePrev/slideNext，避免 Navigation+loop+auto 下偶发不响应 */
 const swiperRef = ref<SwiperClass | null>(null)
@@ -154,7 +164,7 @@ function badgeClass(item: HomeCardSwiperItem) {
 
 <template>
   <section
-    v-if="items.length"
+    v-if="items?.length"
     class="home-card-swiper-wrap"
     :class="{
       'home-card-swiper-wrap--fullbleed': fullBleed,
@@ -216,20 +226,21 @@ function badgeClass(item: HomeCardSwiperItem) {
     <Swiper
       class="home-card-swiper"
       :modules="modules"
+      effect="coverflow"
+      :coverflow-effect="coverflowEffectOpts"
       :slides-per-view="'auto'"
       :centered-slides="true"
-      :centered-slides-bounds="false"
-      :center-insufficient-slides="!enableLoop && items.length < 3"
-      :round-lengths="true"
-      :space-between="14"
+      :space-between="0"
       :grab-cursor="true"
+      :observer="true"
+      :observe-parents="true"
+      :resize-observer="true"
       :loop="enableLoop"
       :loop-additional-slides="enableLoop ? loopAdditionalSlidesCount : 0"
       :rewind="!enableLoop && items.length > 1"
       :speed="transitionMs"
       :slide-to-clicked-slide="true"
       :watch-overflow="!enableLoop"
-      :watch-slides-progress="true"
       :loop-prevents-sliding="false"
       :pagination="{
         clickable: true,
@@ -313,11 +324,6 @@ function badgeClass(item: HomeCardSwiperItem) {
   --qq-shine-ease: cubic-bezier(0.42, 0.02, 0.58, 0.98);
   /* 统一主曲线：位移 / 缩放 / 透明度 / 滤镜 共用（略偏 ease-out，收尾更顺） */
   --qq-ease-carousel: cubic-bezier(0.22, 0.82, 0.28, 1);
-  /* 主卡与侧卡对比：数值差越大，焦点越突出 */
-  --qq-scale-active: 1.22;
-  --qq-scale-side: 0.72;
-  --qq-scale-far: 0.62;
-  --qq-rot-side: 6deg;
   margin: 0 calc(-1 * var(--buddy-space, 16px)) 24px;
   /* 左右内边距一致，避免舞台与轮播轨道视觉重心偏移 */
   padding: 16px clamp(12px, 4vw, 20px) 26px;
@@ -383,10 +389,6 @@ function badgeClass(item: HomeCardSwiperItem) {
   background:
     radial-gradient(100% 120% at 50% -30%, rgb(59 91 200 / 0.28), transparent 55%),
     linear-gradient(180deg, #121722 0%, #1a1f2e 38%, #1e2638 100%);
-  --qq-scale-active: 1.24;
-  --qq-scale-side: 0.7;
-  --qq-scale-far: 0.6;
-  --qq-rot-side: 6.5deg;
 }
 
 .home-card-swiper-wrap--fullbleed::before {
@@ -576,28 +578,16 @@ function badgeClass(item: HomeCardSwiperItem) {
   display: block;
 }
 
-/*
- * 紧凑模式（非全宽）：略压低侧卡旋转，避免窄屏过于「飞」。
- * 与 fullbleed 同时存在时由下方合并选择器覆盖尺度，避免首页全宽仍用弱对比。
- */
+/* 紧凑模式（非全宽）：边距更紧；slide 宽度见下方 --compact 规则 */
 .home-card-swiper-wrap--compact:not(.home-card-swiper-wrap--fullbleed) {
   margin-bottom: 12px;
   padding: 6px clamp(6px, 2vw, 12px) 12px;
-  --qq-scale-active: 1.18;
-  --qq-scale-side: 0.74;
-  --qq-scale-far: 0.62;
-  --qq-rot-side: 4deg;
 }
 
 .home-card-swiper-wrap--compact.home-card-swiper-wrap--fullbleed {
   margin-bottom: 10px;
   padding-top: 8px;
   padding-bottom: 12px;
-  /* 首页门户：强化 C 位 + 与侧卡落差；单卡宽度见下方 slide，与 transform 一起拉高主卡存在感 */
-  --qq-scale-active: 1.28;
-  --qq-scale-side: 0.68;
-  --qq-scale-far: 0.56;
-  --qq-rot-side: 5.5deg;
 }
 
 @media (min-width: 900px) {
@@ -622,26 +612,10 @@ function badgeClass(item: HomeCardSwiperItem) {
 }
 
 .home-card-swiper-wrap--compact :deep(.home-card-swiper .swiper-slide) {
-  width: min(540px, 98%) !important;
-  min-height: clamp(184px, 32vw, 252px) !important;
-}
-
-@media (min-width: 900px) {
-  .home-card-swiper-wrap--compact :deep(.home-card-swiper .swiper-slide) {
-    width: min(520px, 90%) !important;
-    min-height: clamp(192px, 30vw, 260px) !important;
-  }
-}
-
-/* 首页全宽：在保留对称露边前提下提高主卡横向占比 */
-.home-card-swiper-wrap--compact.home-card-swiper-wrap--fullbleed :deep(.home-card-swiper .swiper-slide) {
-  width: min(520px, 95%) !important;
-}
-
-@media (min-width: 900px) {
-  .home-card-swiper-wrap--compact.home-card-swiper-wrap--fullbleed :deep(.home-card-swiper .swiper-slide) {
-    width: min(560px, 80%) !important;
-  }
+  /* 勿對寬度使用 !important：slidesPerView:auto 時會阻斷 Swiper 量測，輪播區可能高度為 0 */
+  width: min(100%, clamp(280px, 45vw, 720px));
+  flex-shrink: 0;
+  min-height: clamp(184px, 28vw, 252px);
 }
 
 .home-card-swiper-wrap--compact :deep(.qq-card) {
@@ -721,6 +695,8 @@ function badgeClass(item: HomeCardSwiperItem) {
   isolation: isolate;
   perspective: 1400px;
   perspective-origin: 50% 44%;
+  /* 防止 flex 子項在 Swiper 尚未完成量測時被壓成 0 高度 */
+  min-height: clamp(188px, 32vw, 380px);
 }
 
 .home-card-swiper-nav {
@@ -819,73 +795,34 @@ function badgeClass(item: HomeCardSwiperItem) {
 }
 
 /*
- * 宽度相对 Swiper 容器（主栏），勿用 vw —— 否则会按整屏视口算宽，
- * 在双栏布局里轨道宽于深色区域，导致居中错位、左侧被裁、分页偏右。
+ * EffectCoverflow：slide 寬度用 clamp + min(100%, …)（不用 !important），讓 Swiper 能正確計算 auto 寬度與 coverflow 位移。
  */
 .home-card-swiper :deep(.swiper-slide) {
   box-sizing: border-box;
-  width: min(640px, 98%) !important;
+  width: min(100%, clamp(300px, 50vw, 900px));
+  flex-shrink: 0;
   max-width: 100%;
   overflow: visible;
   display: flex;
   justify-content: center;
   align-items: stretch;
-  min-height: clamp(196px, 34vw, 280px);
+  min-height: clamp(196px, 34vw, 360px);
   transform-style: preserve-3d;
-  transition:
-    opacity var(--qq-swiper-dur, 680ms) var(--qq-ease-carousel),
-    transform var(--qq-swiper-dur, 680ms) var(--qq-ease-carousel);
+  transition: opacity var(--qq-swiper-dur, 680ms) var(--qq-ease-carousel);
 }
 
 @media (min-width: 900px) {
   .home-card-swiper :deep(.swiper-slide) {
-    /* 大屏提高单卡横向占比，仍保留左右露边 */
-    width: min(620px, 84%) !important;
+    width: min(100%, clamp(480px, 65vw, 1000px));
   }
 }
 
-.home-card-swiper :deep(.swiper-slide:not(.swiper-slide-active)) {
-  opacity: 0.4;
-}
-
-.home-card-swiper :deep(.swiper-slide-prev),
-.home-card-swiper :deep(.swiper-slide-next) {
-  opacity: 0.72;
-  z-index: 2;
-}
-
-.home-card-swiper :deep(.swiper-slide-active) {
-  opacity: 1;
-  z-index: 5;
-}
-
-/* 邻卡：缩小 + 轻旋转 + 前移景深，与主卡形成统一「封面流」 */
-.home-card-swiper :deep(.swiper-slide-prev .qq-card) {
-  transform: scale(var(--qq-scale-side)) translateX(18px) rotateY(var(--qq-rot-side)) translateZ(-22px);
-  filter: brightness(0.8) saturate(0.86) contrast(0.98);
-  box-shadow:
-    0 12px 32px rgb(0 0 0 / 0.4),
-    0 0 0 1px rgb(255 255 255 / 0.08) inset;
-}
-
-.home-card-swiper :deep(.swiper-slide-next .qq-card) {
-  transform: scale(var(--qq-scale-side)) translateX(-18px) rotateY(calc(-1 * var(--qq-rot-side)))
-    translateZ(-22px);
-  filter: brightness(0.8) saturate(0.86) contrast(0.98);
-  box-shadow:
-    0 12px 32px rgb(0 0 0 / 0.4),
-    0 0 0 1px rgb(255 255 255 / 0.08) inset;
-}
-
-.home-card-swiper :deep(.swiper-slide:not(.swiper-slide-active):not(.swiper-slide-prev):not(.swiper-slide-next) .qq-card) {
-  transform: scale(var(--qq-scale-far, 0.62)) translateZ(-32px);
+.home-card-swiper :deep(.swiper-slide:not(.swiper-slide-active) .qq-card) {
   filter: brightness(0.68) saturate(0.8);
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.45);
 }
 
-/* 主卡：居中放大 + 略向前浮起 + 呼吸光晕 */
 .home-card-swiper :deep(.swiper-slide-active .qq-card) {
-  transform: scale(var(--qq-scale-active)) translateZ(34px) rotateY(0deg);
   filter: saturate(1.08) brightness(1.04);
   animation: qq-active-breathe 3.4s ease-in-out infinite;
 }
@@ -985,10 +922,13 @@ function badgeClass(item: HomeCardSwiperItem) {
   outline-offset: 3px;
 }
 
-.qq-card:hover {
-  box-shadow:
-    0 20px 44px rgb(0 0 0 / 0.42),
-    0 0 0 1px rgb(255 255 255 / 0.14) inset;
+@media (prefers-reduced-motion: no-preference) {
+  .home-card-swiper :deep(.swiper-slide-active .qq-card:hover) {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow:
+      0 22px 48px rgb(0 0 0 / 0.42),
+      0 0 0 1px rgb(255 255 255 / 0.14) inset;
+  }
 }
 
 .qq-card__cover {

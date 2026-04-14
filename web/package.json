@@ -12,12 +12,18 @@
     "@element-plus/icons-vue": "^2.3.2",
     "axios": "^1.13.6",
     "element-plus": "^2.13.6",
+    "highlight.js": "^11.11.1",
+    "lottie-web": "^5.13.0",
+    "markdown-it": "^14.1.1",
+    "markdown-it-multimd-table": "^4.2.3",
     "pinia": "^3.0.4",
     "swiper": "^11.2.10",
     "vue": "^3.5.30",
     "vue-router": "^5.0.4"
   },
   "devDependencies": {
+    "@types/highlight.js": "^9.12.4",
+    "@types/markdown-it": "^14.1.2",
     "@types/node": "^24.12.0",
     "@vitejs/plugin-vue": "^6.0.5",
     "@vue/tsconfig": "^0.9.0",
