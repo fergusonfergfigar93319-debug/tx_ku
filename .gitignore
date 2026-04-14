@@ -1,0 +1,21 @@
+# Web 前端（Vite + Vue）
+web/node_modules/
+web/dist/
+web/dist-ssr/
+web/*.local
+web/.vite/
+
+# 日誌
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# 編輯器 / 系統
+.idea/
+.DS_Store
+Thumbs.db
+
+# 根目錄臨時截圖與雜圖（不納入倉庫）
+/*.jpg
+/*.jpeg
+/*.png

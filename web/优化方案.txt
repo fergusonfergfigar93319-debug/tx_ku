@@ -1,0 +1,802 @@
+《元流同频 Web端 — 现代化设计优化方案》
+
+零、设计原则（默认语境：大屏 Web）
+- 本站点以桌面浏览器 / 大屏宽度为第一设计目标：信息可多栏并列、留白与字号按 ≥1280px 视口优先校准；键鼠交互（悬停、拖拽、快捷键友好）优于触控手势假设。
+- 断点以下（平板竖屏、手机）为兼容与可读性适配，不反向绑架布局（不把「单列拇指区」当作主稿）。
+- 与原生 App 功能不必对齐；体验上突出「工作台式浏览与创作」，而非手机端信息压缩。
+
+一、整体设计方向（2026年主流趋势）
+1.1 视觉风格定位
+Glassmorphism 2.0（进化版玻璃态）：半透明层次 + 动态模糊 + 细腻光影
+Neumorphism Lite（轻量新拟态）：柔和内阴影 + 微凸浮雕感，避免过度扁平
+Gradient Mesh（渐变网格）：多色渐变背景 + 动态光晕效果
+Micro-interactions（微交互）：悬停、点击、加载的精致动效反馈
+Light-first 大屏 Web（亮色调）：整站以桌面浏览器宽视口与键鼠交互为主视觉与信息密度；暖雾亮底 + 品牌渐变；暗色模式不作为主推（若未来需要可作为可选补充）。
+1.2 色彩系统升级
+
+/* 当前问题：色彩层次不够丰富，缺乏情感化表达 */
+
+/* 优化方案：引入语义化色彩 + 动态渐变 */
+--buddy-primary-gradient: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%);
+--buddy-accent-gradient: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c084fc 100%);
+--buddy-success-gradient: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+--buddy-gaming-gradient: linear-gradient(135deg, #ec4899 0%, #f43f5e 50%, #fb923c 100%);
+
+/* 情感化色彩：王者荣耀主题 */
+--buddy-honor-gold: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+--buddy-legendary-purple: linear-gradient(135deg, #a855f7 0%, #9333ea 50%, #7e22ce 100%);
+--buddy-epic-cyan: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%);
+二、核心模块设计优化
+2.1 顶部导航栏（Header）
+当前问题：
+
+导航栏较为传统，缺乏层次感
+品牌标识不够突出
+移动端汉堡菜单体验一般（小屏保留顶栏 + 抽屉，不采用 App 式底栏导航，见「四、4.2」）
+优化方案：
+
+
+<!-- 设计要点 -->
+1. 添加动态模糊背景（backdrop-filter增强）
+2. 品牌Logo加入微动效（呼吸光晕）
+3. 导航项采用Pill形态 + 滑动指示器
+4. 添加用户头像快捷入口（右上角）
+5. 搜索框集成（可展开式）
+
+<!-- 视觉层次 -->
+- 背景：半透明白色 + 高斯模糊20px + 微渐变
+- 边框：1px渐变边框（蓝紫色）
+- 阴影：多层阴影（0 4px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.1) inset）
+- 激活态：Pill背景 + 滑动动画（300ms cubic-bezier(0.4, 0, 0.2, 1)）
+具体实现建议：
+
+
+.app-header {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, 
+    rgba(37, 99, 235, 0.2) 0%, 
+    rgba(124, 58, 237, 0.2) 50%, 
+    rgba(8, 145, 178, 0.2) 100%) 1;
+  box-shadow: 
+    0 4px 24px rgba(15, 23, 42, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.brand {
+  position: relative;
+  /* 添加呼吸光晕 */
+  animation: brand-glow 3s ease-in-out infinite;
+}
+
+@keyframes brand-glow {
+  0%, 100% { 
+    filter: drop-shadow(0 0 8px rgba(37, 99, 235, 0.3)); 
+  }
+  50% { 
+    filter: drop-shadow(0 0 16px rgba(124, 58, 237, 0.5)); 
+  }
+}
+
+/* 导航项滑动指示器 */
+.nav-desktop {
+  position: relative;
+}
+
+.nav-desktop::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--buddy-gradient-brand);
+  border-radius: 3px 3px 0 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* 通过JS动态计算位置和宽度 */
+}
+2.2 卡片系统（Card Components）
+当前问题：
+
+卡片较为扁平，缺乏深度
+悬停效果单一
+信息层次不够清晰
+优化方案：
+
+A. 推荐搭子卡片（版本速递）
+
+
+/* 三层结构：背景层 + 内容层 + 光效层 */
+
+.recommendation-card {
+  position: relative;
+  background: linear-gradient(145deg, 
+    rgba(255, 255, 255, 0.9) 0%, 
+    rgba(248, 250, 252, 0.8) 100%);
+  border: 1px solid rgba(37, 99, 235, 0.1);
+  border-radius: 20px;
+  padding: 20px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 背景网格纹理 */
+.recommendation-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* 光效层（悬停时显示） */
+.recommendation-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at center,
+    rgba(37, 99, 235, 0.15) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+}
+
+.recommendation-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(37, 99, 235, 0.3);
+  box-shadow: 
+    0 20px 60px rgba(37, 99, 235, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+}
+
+.recommendation-card:hover::before {
+  opacity: 1;
+}
+
+.recommendation-card:hover::after {
+  opacity: 1;
+  animation: light-sweep 2s ease-in-out infinite;
+}
+
+@keyframes light-sweep {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* 匹配分数：数字动效 */
+.buddy-match-score {
+  font-size: 32px;
+  font-weight: 800;
+  background: var(--buddy-success-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+  animation: score-pulse 2s ease-in-out infinite;
+}
+
+@keyframes score-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+B. 帖子卡片（峡谷广场）
+
+
+.post-card {
+  position: relative;
+  background: var(--buddy-surface);
+  border-radius: 16px;
+  padding: 18px;
+  border: 1px solid var(--buddy-border);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 左侧色条（根据分区动态变色） */
+.post-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--category-color); /* 动态注入 */
+  box-shadow: 0 0 12px var(--category-color);
+}
+
+/* 分区色彩映射 */
+.post-card[data-category="recruit"]::before {
+  background: linear-gradient(180deg, #f59e0b 0%, #f97316 100%);
+}
+
+.post-card[data-category="guide"]::before {
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.post-card[data-category="social"]::before {
+  background: linear-gradient(180deg, #ec4899 0%, #db2777 100%);
+}
+
+.post-card:hover {
+  transform: translateX(4px);
+  border-color: rgba(37, 99, 235, 0.3);
+  box-shadow: 
+    -4px 0 0 0 var(--category-color),
+    0 8px 32px rgba(15, 23, 42, 0.12);
+}
+2.3 AI搭子创作页面
+当前问题：
+
+表单较为传统
+缺乏创作氛围感
+预设卡片不够吸引
+优化方案：
+
+A. 整体布局
+
+
+┌─────────────────────────────────────────┐
+│  [顶部进度条] 1/4 基础设定 → 2/4 风格 → ...│
+├─────────────────────────────────────────┤
+│                                         │
+│  ┌───────────┐  ┌─────────────────┐   │
+│  │           │  │                 │   │
+│  │  预览区   │  │   表单区        │   │
+│  │  (实时)   │  │   (分步骤)      │   │
+│  │           │  │                 │   │
+│  └───────────┘  └─────────────────┘   │
+│                                         │
+│  [成品预设轮播 - 横向滚动]              │
+└─────────────────────────────────────────┘
+B. 预设卡片设计
+
+
+.agent-preset-card {
+  position: relative;
+  width: 280px;
+  height: 360px;
+  border-radius: 20px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 背景：英雄主题渐变 */
+.agent-preset-card[data-hero="luna"] {
+  background: linear-gradient(135deg, 
+    #1e3a8a 0%, 
+    #3b82f6 50%, 
+    #60a5fa 100%);
+}
+
+.agent-preset-card[data-hero="diaochan"] {
+  background: linear-gradient(135deg, 
+    #831843 0%, 
+    #db2777 50%, 
+    #f472b6 100%);
+}
+
+/* 卡片内容层 */
+.agent-preset-card__content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: linear-gradient(180deg, 
+    rgba(0, 0, 0, 0.2) 0%, 
+    rgba(0, 0, 0, 0.6) 100%);
+}
+
+/* 英雄剪影（背景装饰） */
+.agent-preset-card::before {
+  content: '';
+  position: absolute;
+  right: -20%;
+  bottom: -10%;
+  width: 120%;
+  height: 120%;
+  background-image: var(--hero-silhouette); /* SVG或图片 */
+  opacity: 0.15;
+  filter: blur(2px);
+  transition: all 0.5s ease;
+}
+
+.agent-preset-card:hover::before {
+  transform: scale(1.1) rotate(5deg);
+  opacity: 0.25;
+}
+
+/* 悬停效果：3D倾斜 */
+.agent-preset-card:hover {
+  transform: translateY(-12px) rotateX(5deg);
+  box-shadow: 
+    0 30px 80px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+/* 标签：位置/类型 */
+.agent-preset-card__tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.agent-preset-card__tag {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+C. 表单优化
+
+
+/* 场景选择：图标化按钮组 */
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.scenario-option {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  border: 2px solid var(--buddy-border);
+  background: var(--buddy-surface);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+/* 图标 + 文字垂直布局 */
+.scenario-option__icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+  transition: transform 0.3s ease;
+}
+
+.scenario-option:hover .scenario-option__icon {
+  transform: scale(1.15) rotate(5deg);
+}
+
+/* 选中态：渐变边框 + 光晕 */
+.scenario-option.is-selected {
+  border-color: transparent;
+  background: linear-gradient(135deg, 
+    rgba(37, 99, 235, 0.1) 0%, 
+    rgba(124, 58, 237, 0.1) 100%);
+  box-shadow: 
+    0 0 0 2px var(--buddy-primary),
+    0 8px 24px rgba(37, 99, 235, 0.3);
+}
+
+.scenario-option.is-selected::before {
+  content: '✓';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--buddy-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  animation: check-pop 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes check-pop {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+2.4 峡谷广场（论坛）
+优化方案：
+
+A. 顶部Banner
+
+
+.forum-hero {
+  position: relative;
+  height: 240px;
+  border-radius: 24px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+/* 背景：峡谷主题渐变 + 动态粒子 */
+.forum-hero__bg {
+  position: absolute;
+  inset: 0;
+  background: 
+    linear-gradient(135deg, 
+      #0f172a 0%, 
+      #1e3a8a 30%, 
+      #3b82f6 60%, 
+      #0891b2 100%);
+}
+
+/* Canvas粒子效果（可选） */
+.forum-hero__particles {
+  position: absolute;
+  inset: 0;
+  /* 通过JS实现粒子动画 */
+}
+
+/* 内容层 */
+.forum-hero__content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: linear-gradient(90deg, 
+    rgba(0, 0, 0, 0.6) 0%, 
+    transparent 100%);
+}
+
+.forum-hero__title {
+  font-size: 48px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(59, 130, 246, 0.5);
+  margin-bottom: 12px;
+}
+
+.forum-hero__subtitle {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+B. 分区Tab
+
+
+/* 替换传统Tab为卡片式切换 */
+.forum-categories {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.category-chip {
+  position: relative;
+  padding: 12px 20px;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  background: var(--buddy-surface);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 分区图标 */
+.category-chip__icon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* 激活态：渐变背景 + 发光 */
+.category-chip.is-active {
+  background: var(--category-gradient);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 
+    0 4px 16px var(--category-shadow),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  transform: translateY(-2px);
+}
+
+/* 分区色彩 */
+.category-chip[data-category="recruit"].is-active {
+  --category-gradient: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  --category-shadow: rgba(245, 158, 11, 0.4);
+}
+
+.category-chip[data-category="guide"].is-active {
+  --category-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  --category-shadow: rgba(37, 99, 235, 0.4);
+}
+2.5 元流档案（个人中心）
+优化方案：
+
+A. 顶部Profile Card
+
+
+.profile-hero {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+/* 背景：渐变 + 网格纹理 */
+.profile-hero__bg {
+  position: absolute;
+  inset: 0;
+  background: 
+    linear-gradient(135deg, 
+      #7c3aed 0%, 
+      #a855f7 30%, 
+      #2563eb 70%, 
+      #0891b2 100%);
+}
+
+.profile-hero__grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    repeating-linear-gradient(
+      0deg, 
+      rgba(255, 255, 255, 0.05) 0px, 
+      transparent 1px, 
+      transparent 40px, 
+      rgba(255, 255, 255, 0.05) 41px
+    ),
+    repeating-linear-gradient(
+      90deg, 
+      rgba(255, 255, 255, 0.05) 0px, 
+      transparent 1px, 
+      transparent 40px, 
+      rgba(255, 255, 255, 0.05) 41px
+    );
+}
+
+/* 内容层 */
+.profile-hero__content {
+  position: relative;
+  z-index: 2;
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+/* 头像：3D悬浮效果 */
+.profile-avatar {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    0 0 0 8px rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.profile-avatar:hover {
+  transform: translateY(-8px) scale(1.05);
+}
+
+/* 头像光环 */
+.profile-avatar::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #fbbf24 0deg,
+    #f59e0b 90deg,
+    #ec4899 180deg,
+    #a855f7 270deg,
+    #fbbf24 360deg
+  );
+  animation: avatar-ring-rotate 3s linear infinite;
+  z-index: -1;
+}
+
+@keyframes avatar-ring-rotate {
+  100% { transform: rotate(360deg); }
+}
+
+/* 信息区 */
+.profile-info {
+  flex: 1;
+  color: #fff;
+}
+
+.profile-nickname {
+  font-size: 32px;
+  font-weight: 900;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.profile-stats {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.profile-stat {
+  text-align: center;
+}
+
+.profile-stat__value {
+  font-size: 24px;
+  font-weight: 800;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.profile-stat__label {
+  font-size: 12px;
+  opacity: 0.9;
+}
+三、动效系统
+3.1 页面加载动画
+
+/* 骨架屏：渐变扫光 */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--buddy-surface-2) 0%,
+    var(--buddy-surface-elevated) 20%,
+    var(--buddy-surface-2) 40%,
+    var(--buddy-surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+3.2 列表入场动画
+
+/* 交错淡入 + 上浮 */
+@keyframes list-item-enter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.list-item {
+  animation: list-item-enter 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.list-item:nth-child(1) { animation-delay: 0.05s; }
+.list-item:nth-child(2) { animation-delay: 0.1s; }
+.list-item:nth-child(3) { animation-delay: 0.15s; }
+/* ... */
+3.3 按钮交互
+
+.buddy-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 水波纹效果 */
+.buddy-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.buddy-button:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* 悬停：渐变移动 */
+.buddy-button-primary {
+  background: linear-gradient(
+    135deg,
+    #2563eb 0%,
+    #3b82f6 50%,
+    #60a5fa 100%
+  );
+  background-size: 200% 100%;
+  transition: background-position 0.4s ease;
+}
+
+.buddy-button-primary:hover {
+  background-position: 100% 0;
+}
+四、响应式设计
+4.1 断点系统
+
+/* 移动优先 */
+:root {
+  --breakpoint-sm: 640px;   /* 手机横屏 */
+  --breakpoint-md: 768px;   /* 平板竖屏 */
+  --breakpoint-lg: 1024px;  /* 平板横屏/小笔记本 */
+  --breakpoint-xl: 1280px;  /* 桌面 */
+  --breakpoint-2xl: 1536px; /* 大屏 */
+}
+
+/* 容器最大宽度 */
+.container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+@media (min-width: 640px) {
+  .container { max-width: 640px; }
+}
+
+@media (min-width: 768px) {
+  .container { max-width: 768px; }
+}
+
+@media (min-width: 1024px) {
+  .container { max-width: 1024px; }
+}
+
+@media (min-width: 1280px) {
+  .container { max-width: 1200px; }
+}
+4.2 小屏与 Web 定位（已废弃「底栏导航」方案）
+（与「零、设计原则」一致：大屏为主稿，本节仅描述窄屏兼容策略。）
+
+/* 产品决策：不做移动端底部 Tab 栏。 */
+/* 原因：凸显 Web 端特性（宽屏信息架构、顶栏全局导航、悬停与快捷键友好），与 App 底栏范式刻意区分。 */
+/* 窄屏策略：顶栏 sticky 保留在顶部 + 汉堡抽屉；内容区可读性优先（适当折行/单列），不将主导航移至屏幕底部。 */
+/* 实现参考：MainLayout.vue — .app-header--glass 始终 top:0；小屏用 .nav-mobile-btn + el-drawer。 */
+
+/* 以下草案代码已废弃，仅作历史记录，勿再实现：
+@media (max-width: 767px) {
+  .app-header {
+    top: auto;
+    bottom: 0;
+    border-top: 1px solid var(--buddy-border);
+    border-bottom: none;
+  }
+  .nav-desktop {
+    width: 100%;
+    justify-content: space-around;
+  }
+}
+*/

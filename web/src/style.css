@@ -1,0 +1,126 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+#app {
+  min-height: 100vh;
+  background: transparent;
+}
+
+a {
+  color: var(--buddy-primary);
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid rgb(var(--buddy-rgb-brand) / 0.42);
+  outline-offset: 2px;
+}
+
+.el-card {
+  --el-card-bg-color: var(--buddy-surface-elevated);
+  border-color: var(--buddy-border) !important;
+}
+
+.el-menu {
+  --el-menu-bg-color: var(--buddy-surface-elevated);
+  --el-menu-text-color: var(--buddy-text);
+  --el-menu-hover-bg-color: var(--buddy-primary-dim);
+}
+
+.buddy-segment {
+  display: flex;
+  padding: 4px;
+  gap: 4px;
+  background: var(--buddy-segment-track);
+  border: 1px solid rgb(var(--buddy-rgb-brand) / 0.13);
+  border-radius: var(--buddy-radius);
+  margin-bottom: 14px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.82);
+}
+
+.buddy-segment button {
+  flex: 1;
+  border: none;
+  border-radius: var(--buddy-radius-sm);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--buddy-text-secondary);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background var(--buddy-duration-sm) var(--buddy-ease-out),
+    color var(--buddy-duration-sm) var(--buddy-ease-out),
+    box-shadow var(--buddy-duration-sm) var(--buddy-ease-out),
+    transform var(--buddy-duration-xs) var(--buddy-ease-spring);
+}
+
+.buddy-segment button:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .buddy-segment button:active {
+    transform: none;
+  }
+}
+
+.buddy-segment button[aria-selected='true'] {
+  background: linear-gradient(145deg, #ffffff 0%, #e0ebff 100%);
+  color: #1d4ed8;
+  box-shadow:
+    0 3px 14px rgb(var(--buddy-rgb-brand) / 0.13),
+    0 0 0 1px rgb(var(--buddy-rgb-brand) / 0.26);
+}
+
+/* 主布局内路由切换：入场略带回弹、离场轻上浮，层次更清晰 */
+.buddy-route-enter-active {
+  transition:
+    opacity var(--buddy-duration-md) var(--buddy-ease-out),
+    transform var(--buddy-duration-lg) var(--buddy-ease-emphasized),
+    filter var(--buddy-duration-md) var(--buddy-ease-out);
+}
+
+.buddy-route-leave-active {
+  transition:
+    opacity var(--buddy-duration-sm) var(--buddy-ease-out),
+    transform var(--buddy-duration-sm) var(--buddy-ease-out);
+}
+
+.buddy-route-enter-from {
+  opacity: 0;
+  transform: translateY(18px) scale(0.992);
+  filter: blur(4px);
+}
+
+.buddy-route-enter-to {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+.buddy-route-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.buddy-route-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.998);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .buddy-route-enter-active,
+  .buddy-route-leave-active {
+    transition: opacity 0.12s ease;
+  }
+
+  .buddy-route-enter-from,
+  .buddy-route-leave-to {
+    transform: none;
+    filter: none;
+  }
+}

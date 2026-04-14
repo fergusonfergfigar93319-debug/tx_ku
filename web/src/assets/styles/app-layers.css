@@ -1,0 +1,161 @@
+/**
+ * 全站功能分层：同一页内区分「发现 / 工具 / 话题 / 内容流」等，避免揉成一团。
+ * 与峡谷广场 forum-layer 语义对齐；页面根节点使用 .app-page-stack 控制垂直节奏。
+ */
+:root {
+  --app-stack-gap: 14px;
+  --app-layer-radius: var(--buddy-radius, 14px);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --app-stack-gap: 16px;
+  }
+}
+
+/* 主内容区：与顶栏、上下文条留出呼吸感 */
+.app-workspace {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  padding-bottom: 24px;
+}
+
+/* 页面纵向栈：子区块之间固定间距，层次一眼可分 */
+.app-page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-stack-gap);
+}
+
+/* 通用分层容器（与 .forum-layer 共用基底） */
+.app-layer,
+.forum-layer {
+  position: relative;
+  margin-left: calc(-1 * var(--buddy-space, 12px));
+  margin-right: calc(-1 * var(--buddy-space, 12px));
+  border-radius: var(--app-layer-radius);
+  overflow: hidden;
+  border: 1px solid rgb(15 23 42 / 0.07);
+  box-shadow: var(--buddy-shadow-card);
+}
+
+.app-layer__inner,
+.forum-layer__inner {
+  position: relative;
+  z-index: 1;
+  padding: 14px var(--buddy-space, 12px) 14px;
+}
+
+.app-layer__eyebrow,
+.forum-layer__eyebrow {
+  margin: 0 0 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(var(--buddy-rgb-brand) / 0.85);
+}
+
+.app-layer__title,
+.forum-layer__title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--buddy-text);
+}
+
+.app-layer__hint,
+.forum-layer__hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--buddy-text-muted);
+}
+
+/* 发现 / 品牌入口：暖白 + 靛紫光晕 */
+.app-layer--discover,
+.forum-layer--discover {
+  border-color: rgb(var(--buddy-rgb-brand) / 0.14);
+  background: linear-gradient(
+    145deg,
+    rgb(255 255 255 / 0.98) 0%,
+    rgb(239 246 255 / 0.94) 52%,
+    rgb(250 245 255 / 0.92) 100%
+  );
+}
+
+.app-layer--discover::before,
+.forum-layer--discover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.38;
+  background:
+    radial-gradient(80% 55% at 100% 0%, rgb(var(--buddy-rgb-brand) / 0.14) 0%, transparent 55%),
+    radial-gradient(65% 50% at 0% 100%, rgb(var(--buddy-rgb-accent) / 0.1) 0%, transparent 50%);
+}
+
+/* 工具 / 筛选：冷灰 + 左侧色条 */
+.app-layer--tools,
+.forum-layer--filters {
+  background: linear-gradient(180deg, rgb(248 250 252) 0%, rgb(241 245 249) 100%);
+  border-left: 3px solid rgb(var(--buddy-rgb-brand) / 0.42);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.95) inset,
+    0 10px 32px rgb(15 23 42 / 0.05);
+}
+
+/* 话题 / 次级聚合：浅紫 */
+.app-layer--topics,
+.forum-layer--topics {
+  background: linear-gradient(168deg, rgb(255 255 255 / 0.98) 0%, rgb(250 245 255 / 0.88) 100%);
+  border-color: rgb(109 75 212 / 0.2);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.9) inset,
+    0 8px 28px rgb(109 75 212 / 0.06);
+}
+
+/* 内容模块：白底卡片，用于 Buddy 模块成组 */
+.app-layer--content,
+.app-layer--module {
+  background: linear-gradient(168deg, rgb(255 255 255 / 0.98) 0%, rgb(248 250 252 / 0.95) 100%);
+  border-color: rgb(15 23 42 / 0.08);
+}
+
+/* 列表 / 浏览区外壳：透明，由内部卡片承载实体感 */
+.app-layer--feed,
+.forum-layer--feed {
+  margin-left: 0;
+  margin-right: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.app-layer--feed .buddy-feed-cap,
+.forum-layer--feed .buddy-feed-cap {
+  margin: 0 0 10px;
+  padding: 10px 12px !important;
+  border-radius: var(--buddy-radius-sm);
+  border: 1px solid rgb(15 23 42 / 0.06);
+  background: linear-gradient(102deg, rgb(255 255 255 / 0.98) 0%, rgb(248 250 252 / 0.95) 100%);
+  box-shadow: 0 2px 12px rgb(15 23 42 / 0.04);
+}
+
+/* 弱分隔：无大卡片，仅用于标题条 */
+.app-layer--plain {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+/* 沉浸式顶区（如首页轮播）：突破边距时可加此类 */
+.app-stack-bleed {
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  width: 100vw;
+  max-width: 100vw;
+}

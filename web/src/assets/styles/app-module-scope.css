@@ -1,0 +1,28 @@
+/**
+ * 功能域视觉锚点：data-app-module 挂在 .main-shell，供顶栏左侧色条与 CSS 变量使用。
+ * 不改变 MainLayout 内原有 context bar 渐变，仅叠加左边线与强调色变量。
+ */
+.main-shell[data-app-module='portal'] {
+  --app-module-accent: rgb(var(--buddy-rgb-brand));
+}
+
+.main-shell[data-app-module='news'] {
+  --app-module-accent: #2563eb;
+}
+
+.main-shell[data-app-module='community'] {
+  --app-module-accent: #7c3aed;
+}
+
+.main-shell[data-app-module='ai'] {
+  --app-module-accent: #0891b2;
+}
+
+.main-shell[data-app-module='account'] {
+  --app-module-accent: #d97706;
+}
+
+.main-shell[data-app-module] .web-context-bar {
+  border-left: 3px solid var(--app-module-accent, rgb(var(--buddy-rgb-brand)));
+  padding-left: 10px;
+}

@@ -1,0 +1,6 @@
+{
+  "options": [
+    { "id": "honor_of_kings", "label": "王者荣耀" },
+    { "id": "honor_esports", "label": "王者电竞" }
+  ]
+}

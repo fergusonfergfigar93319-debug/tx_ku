@@ -1,0 +1,670 @@
+/**
+ * 元流同频 Web：大屏优先的亮色主题 — 暖雾底 + 靛青 / 薰衣草 / 青绿 品牌轴，层次柔和自然。
+ * 产品叙事：将王者电竞 IP 元素与城市文旅、潮流文化深度融合，探索高质量、场景化的电竞 + AI 新内容与新体验。
+ * 视觉母题（概念级，非官方素材）：峡谷夜色底、荣耀金点缀、史诗紫高光、青锋技能色 — 与「元流同频」工作台气质一致。
+ * Web 端特色：浏览器宽视窗、多栏与全局搜索、键鼠交互（悬停/焦点/快捷键友好），与移动 App 体验分工而非简单复制。
+ * 默认设计语境：桌面宽视口（≥1280px 档优先稿），多栏与信息密度按大屏编排；小屏为兼容降级（顶栏 + 抽屉，无 App 式底栏 Tab）。
+ */
+:root {
+  color-scheme: light;
+
+  /* 品牌轴（与 Element 主色对齐，辅色略向彼此靠拢更协调） */
+  --buddy-primary: #2563eb;
+  --buddy-accent: #6d4bd4;
+  --buddy-secondary: #0d9abc;
+  --buddy-violet: #6d4bd4;
+  --buddy-violet-soft: rgba(109, 75, 212, 0.11);
+  --buddy-cyan: #0d9abc;
+  --buddy-cyan-soft: rgba(13, 154, 188, 0.1);
+  --buddy-magenta: #b23acb;
+  --buddy-magenta-soft: rgba(178, 58, 203, 0.08);
+  --buddy-amber: #c27803;
+  --buddy-amber-soft: rgba(194, 120, 3, 0.12);
+  --buddy-warm-sand: #f6f3ee;
+
+  /* RGB（空格分隔，供 rgb(var(--x) / α) 使用） */
+  --buddy-rgb-brand: 37 99 235;
+  --buddy-rgb-accent: 109 75 212;
+  --buddy-rgb-teal: 13 154 188;
+  /* 荣耀金（边框、强调线、段位感点缀，与琥珀色呼应） */
+  --buddy-rgb-honor-gold: 194 120 3;
+
+  /* 顶栏：雾白 → 冰蓝 → 淡薰衣草 */
+  --buddy-header-bg: linear-gradient(122deg, #ffffff 0%, #eef3fc 40%, #f7f2fc 100%);
+  --buddy-header-bg-solid: #ffffff;
+  --buddy-header-tag: #e4ebf8;
+  --buddy-header-text: #0f172a;
+  --buddy-header-glow:
+    0 1px 0 rgb(255 255 255 / 0.92),
+    0 6px 28px rgb(55 65 120 / 0.07),
+    0 1px 0 rgb(109 75 212 / 0.04);
+
+  /* 页面底：略偏暖的雾灰蓝，避免纯冷灰 */
+  --buddy-page-bg: #eceef6;
+  --buddy-page-bg-alt: #e2e6f0;
+  --buddy-aurora-a: rgb(59 91 200 / 0.085);
+  --buddy-aurora-b: rgb(130 92 220 / 0.075);
+  --buddy-aurora-c: rgb(20 160 190 / 0.065);
+  --buddy-aurora-gold: rgb(var(--buddy-rgb-honor-gold) / 0.055);
+
+  --buddy-surface: #ffffff;
+  --buddy-surface-elevated: #f7f8fc;
+  --buddy-surface-2: #eef1f8;
+
+  /* 列表/卡片铺色：统一冷暖过渡 */
+  --buddy-fill-stat: linear-gradient(168deg, #ffffff 0%, #f5f7fc 100%);
+  --buddy-fill-chip: linear-gradient(162deg, #ffffff 0%, #eef1f8 100%);
+  --buddy-fill-news: linear-gradient(168deg, #ffffff 0%, #f9fafc 100%);
+  --buddy-fill-row: linear-gradient(102deg, #ffffff 0%, #f6f8fd 100%);
+  --buddy-fill-row-hover: linear-gradient(102deg, #f6f8fd 0%, #eef2fa 100%);
+  --buddy-fill-tips-wrap: linear-gradient(180deg, #ffffff 0%, #f6f8fc 100%);
+  --buddy-fill-tip-slide: linear-gradient(156deg, #ffffff 0%, #f5f7fb 98%);
+  --buddy-fill-feed-cap: linear-gradient(100deg, #ffffff 0%, #f3f6fc 100%);
+  --buddy-fill-auth-scrim: linear-gradient(180deg, #e8edf8 0%, var(--buddy-page-bg) 40%, var(--buddy-page-bg) 100%);
+  --buddy-card-inset: 0 0 0 1px rgb(15 23 42 / 0.035) inset;
+
+  --buddy-primary-dim: rgb(var(--buddy-rgb-brand) / 0.1);
+  --buddy-info-banner: linear-gradient(
+    128deg,
+    rgb(var(--buddy-rgb-brand) / 0.07) 0%,
+    rgb(var(--buddy-rgb-accent) / 0.06) 52%,
+    rgb(var(--buddy-rgb-teal) / 0.05) 100%
+  );
+  --buddy-footer-bg: linear-gradient(180deg, rgb(252 252 254 / 0.92) 0%, #e8ecf6 100%);
+  --buddy-segment-track: linear-gradient(162deg, #e4eaf6 0%, #eef1f8 100%);
+
+  /* 顶栏/主导航相关色（非移动端底栏 Tab） */
+  --buddy-nav-bg: #ffffff;
+  --buddy-nav-border: rgb(15 23 42 / 0.09);
+  --buddy-nav-active-bg: linear-gradient(
+    135deg,
+    rgb(var(--buddy-rgb-brand) / 0.11) 0%,
+    rgb(var(--buddy-rgb-accent) / 0.09) 100%
+  );
+  --buddy-nav-active: #2563eb;
+  --buddy-nav-inactive: #64748b;
+
+  /* 文本 */
+  --buddy-text: #0c1222;
+  --buddy-text-secondary: #3e4d62;
+  --buddy-text-muted: #556070;
+
+  --buddy-border: rgb(15 23 42 / 0.095);
+  --buddy-border-strong: rgb(15 23 42 / 0.16);
+  --buddy-border-brand: rgb(var(--buddy-rgb-brand) / 0.22);
+  --buddy-shadow-card:
+    0 1px 2px rgb(15 23 42 / 0.05),
+    0 8px 28px rgb(55 70 120 / 0.07),
+    0 0 0 1px rgb(255 255 255 / 0.5) inset;
+  --buddy-shadow-card-hover:
+    0 6px 22px rgb(55 70 120 / 0.09),
+    0 0 0 1px rgb(var(--buddy-rgb-brand) / 0.14);
+  --buddy-shadow-float: 0 16px 44px rgb(30 40 90 / 0.11);
+  --buddy-shadow-glow-primary: 0 6px 24px rgb(var(--buddy-rgb-brand) / 0.2);
+
+  /* 品牌渐变（装饰条、强调线）：靛青 → 史诗紫 → 荣耀金微光 → 青锋 */
+  --buddy-gradient-brand: linear-gradient(
+    118deg,
+    #2563eb 0%,
+    #6d4bd4 42%,
+    #c27803 52%,
+    #0d9abc 100%
+  );
+  /* 主导航指示条：金边更克制，避免抢戏 */
+  --buddy-gradient-brand-ribbon: linear-gradient(
+    90deg,
+    #2563eb 0%,
+    #7c3aed 38%,
+    #d97706 50%,
+    #9333ea 62%,
+    #0891b2 100%
+  );
+  /* 标题/Logo 渐变字：暗部 → 品牌蓝紫 → 金屑高光 → 青绿收束 */
+  --buddy-gradient-brand-text: linear-gradient(
+    105deg,
+    #0c1222 0%,
+    #2563eb 28%,
+    #6d4bd4 52%,
+    #b45309 72%,
+    #0c8aa8 100%
+  );
+  --buddy-gradient-warm: linear-gradient(118deg, #e8a317 0%, #e5467a 48%, #a855c4 100%);
+
+  /* 语义化渐变（优化方案 · 情感与层次） */
+  --buddy-primary-gradient: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%);
+  --buddy-accent-gradient: linear-gradient(135deg, #6d4bd4 0%, #a855f7 50%, #c084fc 100%);
+  --buddy-success-gradient: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+  --buddy-gaming-gradient: linear-gradient(135deg, #ec4899 0%, #f43f5e 50%, #fb923c 100%);
+  --buddy-honor-gold: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+  --buddy-legendary-purple: linear-gradient(135deg, #a855f7 0%, #9333ea 50%, #7e22ce 100%);
+  --buddy-epic-cyan: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%);
+
+  /* 响应式断点（与 Tailwind 风格对齐，供组件 calc / media 使用） */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  --buddy-success: #16a34a;
+  --buddy-success-soft: rgba(22, 163, 74, 0.12);
+
+  --buddy-radius: 14px;
+  --buddy-radius-sm: 10px;
+  --buddy-space: 16px;
+
+  /* 动效：时长与曲线（全站统一） */
+  --buddy-duration-instant: 0.1s;
+  --buddy-duration-xs: 0.14s;
+  --buddy-duration-sm: 0.22s;
+  --buddy-duration-md: 0.36s;
+  --buddy-duration-lg: 0.52s;
+  --buddy-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --buddy-ease-emphasized: cubic-bezier(0.2, 0.75, 0.25, 1);
+  --buddy-ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
+
+  /* Element Plus：亮色主色 */
+  --el-color-primary: #2563eb;
+  --el-color-primary-light-3: #3b82f6;
+  --el-color-primary-light-5: #60a5fa;
+  --el-color-primary-light-7: #93c5fd;
+  --el-color-primary-light-9: rgba(37, 99, 235, 0.09);
+  --el-color-primary-dark-2: #1d4ed8;
+}
+
+html {
+  background: var(--buddy-page-bg);
+  scroll-behavior: smooth;
+  /* 全宽横条（100vw）避免横向滚动条 */
+  overflow-x: clip;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body.buddy-app {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--buddy-text);
+  font-family:
+    'Noto Sans SC',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    'PingFang SC',
+    'Hiragino Sans GB',
+    'Microsoft YaHei',
+    sans-serif;
+  font-feature-settings: 'kern' 1;
+  -webkit-font-smoothing: antialiased;
+  background-color: var(--buddy-page-bg);
+  background-image:
+    radial-gradient(100% 85% at 0% -8%, var(--buddy-aurora-a), transparent 56%),
+    radial-gradient(92% 72% at 100% 2%, var(--buddy-aurora-b), transparent 52%),
+    radial-gradient(68% 48% at 18% 88%, var(--buddy-aurora-gold), transparent 55%),
+    radial-gradient(78% 58% at 48% 102%, var(--buddy-aurora-c), transparent 48%),
+    linear-gradient(180deg, #e6ebf6 0%, var(--buddy-page-bg) 36%, #e9edf7 100%);
+  background-attachment: fixed;
+}
+
+body.buddy-app ::selection {
+  background: rgb(var(--buddy-rgb-brand) / 0.22);
+  color: var(--buddy-text);
+}
+
+.buddy-page {
+  padding: var(--buddy-space);
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+@media (min-width: 1280px) {
+  .buddy-page {
+    max-width: 1120px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+}
+
+.buddy-card-surface {
+  background: var(--buddy-surface);
+  border: 1px solid var(--buddy-border);
+  border-radius: var(--buddy-radius);
+  box-shadow: var(--buddy-shadow-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition:
+    box-shadow var(--buddy-duration-sm) var(--buddy-ease-out),
+    border-color var(--buddy-duration-sm) var(--buddy-ease-out),
+    transform var(--buddy-duration-sm) var(--buddy-ease-emphasized),
+    filter var(--buddy-duration-sm) var(--buddy-ease-out);
+}
+
+.buddy-card-surface.is-interactive:hover {
+  border-color: rgb(var(--buddy-rgb-brand) / 0.28);
+  box-shadow:
+    var(--buddy-shadow-card-hover),
+    0 0 28px rgb(var(--buddy-rgb-honor-gold) / 0.09);
+  transform: translateY(-3px);
+  filter: saturate(1.02);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .buddy-card-surface.is-interactive:hover {
+    transform: none;
+  }
+}
+
+/* 列表交错入场（父级加 .buddy-stagger-children） */
+@keyframes buddy-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .buddy-stagger-children > * {
+    animation: buddy-rise-in var(--buddy-duration-md) var(--buddy-ease-emphasized) both;
+  }
+
+  .buddy-stagger-children > *:nth-child(1) {
+    animation-delay: 0.02s;
+  }
+  .buddy-stagger-children > *:nth-child(2) {
+    animation-delay: 0.07s;
+  }
+  .buddy-stagger-children > *:nth-child(3) {
+    animation-delay: 0.12s;
+  }
+  .buddy-stagger-children > *:nth-child(4) {
+    animation-delay: 0.17s;
+  }
+  .buddy-stagger-children > *:nth-child(5) {
+    animation-delay: 0.22s;
+  }
+  .buddy-stagger-children > *:nth-child(6) {
+    animation-delay: 0.27s;
+  }
+  .buddy-stagger-children > *:nth-child(7) {
+    animation-delay: 0.32s;
+  }
+  .buddy-stagger-children > *:nth-child(8) {
+    animation-delay: 0.37s;
+  }
+  .buddy-stagger-children > *:nth-child(9) {
+    animation-delay: 0.4s;
+  }
+  .buddy-stagger-children > *:nth-child(10) {
+    animation-delay: 0.43s;
+  }
+  .buddy-stagger-children > *:nth-child(11) {
+    animation-delay: 0.46s;
+  }
+  .buddy-stagger-children > *:nth-child(n + 12) {
+    animation-delay: 0.48s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .buddy-stagger-children > * {
+    animation: none;
+  }
+}
+
+/* 模块标题轻量入场（与 BuddyModuleSection 配合） */
+@keyframes buddy-module-head-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.buddy-module-head--motion {
+  animation: buddy-module-head-in var(--buddy-duration-lg) var(--buddy-ease-emphasized) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .buddy-module-head--motion {
+    animation: none;
+  }
+}
+
+.buddy-match-score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  color: var(--buddy-success);
+}
+
+/** 推荐搭子：匹配分渐变字（可选类名） */
+.buddy-match-score--vivid {
+  font-weight: 800;
+  font-size: clamp(22px, 4vw, 28px);
+  background: var(--buddy-success-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 2px rgb(22 163 74 / 0.25));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .buddy-match-score--vivid {
+    animation: buddy-score-pulse 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes buddy-score-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .buddy-match-score--vivid {
+    animation: none;
+  }
+}
+
+/* 骨架屏扫光（优化方案 3.1） */
+@keyframes buddy-skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.buddy-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--buddy-surface-2) 0%,
+    var(--buddy-surface-elevated) 22%,
+    var(--buddy-surface-2) 44%,
+    var(--buddy-surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: buddy-skeleton-shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--buddy-radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .buddy-skeleton {
+    animation: none;
+  }
+}
+
+@keyframes buddy-shimmer-slide {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.buddy-shimmer-fill {
+  background: linear-gradient(
+    105deg,
+    var(--buddy-surface-2) 0%,
+    var(--buddy-surface-2) 32%,
+    rgb(var(--buddy-rgb-brand) / 0.11) 42%,
+    rgb(var(--buddy-rgb-accent) / 0.09) 50%,
+    rgb(var(--buddy-rgb-teal) / 0.09) 58%,
+    var(--buddy-surface-2) 68%,
+    var(--buddy-surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: buddy-shimmer-slide 1.35s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .buddy-shimmer-fill {
+    animation: none;
+  }
+}
+
+/* 主按钮：水波纹 + 渐变位移（优化方案 3.3，可与 el-button 叠用） */
+.buddy-button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.buddy-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.42);
+  transform: translate(-50%, -50%);
+  transition:
+    width 0.55s var(--buddy-ease-out),
+    height 0.55s var(--buddy-ease-out);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.buddy-button > * {
+  position: relative;
+  z-index: 1;
+}
+
+.buddy-button:active::after {
+  width: 320px;
+  height: 320px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .buddy-button::after {
+    display: none;
+  }
+}
+
+.buddy-button--primary {
+  border: none !important;
+  color: #fff !important;
+  background: var(--buddy-primary-gradient) !important;
+  background-size: 200% 100% !important;
+  transition:
+    background-position 0.42s var(--buddy-ease-out),
+    filter var(--buddy-duration-sm) var(--buddy-ease-out),
+    box-shadow var(--buddy-duration-sm) var(--buddy-ease-out) !important;
+}
+
+.buddy-button--primary:hover {
+  background-position: 100% 0 !important;
+  filter: brightness(1.04);
+}
+
+.buddy-page-hero {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 12px;
+  padding: 0;
+  border: 1px solid rgb(var(--buddy-rgb-brand) / 0.14);
+  border-radius: var(--buddy-radius);
+  box-shadow:
+    var(--buddy-shadow-card),
+    0 0 48px rgb(var(--buddy-rgb-accent) / 0.06);
+  background: linear-gradient(165deg, #ffffff 0%, #f8f9fd 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.buddy-page-hero__mesh {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    radial-gradient(90% 65% at 100% -15%, rgb(var(--buddy-rgb-brand) / 0.09) 0%, transparent 52%),
+    radial-gradient(70% 55% at 0% 110%, rgb(var(--buddy-rgb-accent) / 0.08) 0%, transparent 50%),
+    radial-gradient(60% 45% at 70% 90%, rgb(var(--buddy-rgb-teal) / 0.05) 0%, transparent 50%);
+}
+
+@keyframes buddy-stripe-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 2px 12px rgb(var(--buddy-rgb-brand) / 0.3),
+      0 0 14px rgb(var(--buddy-rgb-honor-gold) / 0.08);
+    filter: saturate(1);
+  }
+  50% {
+    box-shadow:
+      0 2px 20px rgb(var(--buddy-rgb-brand) / 0.38),
+      0 0 28px rgb(var(--buddy-rgb-accent) / 0.24),
+      0 0 22px rgb(var(--buddy-rgb-honor-gold) / 0.18);
+    filter: saturate(1.06);
+  }
+}
+
+.buddy-page-hero__stripe {
+  position: relative;
+  height: 4px;
+  background: var(--buddy-gradient-brand);
+  background-size: 200% 100%;
+  box-shadow: 0 2px 12px rgb(var(--buddy-rgb-brand) / 0.26);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .buddy-page-hero__stripe {
+    animation: buddy-stripe-glow 4.5s ease-in-out infinite;
+  }
+}
+
+.buddy-page-hero__inner {
+  position: relative;
+  padding: 16px 16px 14px;
+}
+
+.buddy-feed-cap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: var(--buddy-radius-sm);
+  background: var(--buddy-fill-feed-cap);
+  border: 1px solid var(--buddy-border);
+  box-shadow: 0 2px 12px rgb(15 23 42 / 0.04);
+}
+
+.buddy-feed-cap__accent {
+  width: 4px;
+  height: 1.2rem;
+  border-radius: 4px;
+  background: var(--buddy-gradient-brand);
+  box-shadow: 0 0 12px rgb(var(--buddy-rgb-brand) / 0.35);
+  flex-shrink: 0;
+}
+
+.buddy-feed-cap__title {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--buddy-text);
+}
+
+.buddy-feed-cap__meta {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--buddy-text-muted);
+}
+
+.buddy-feed-cap__desc {
+  width: 100%;
+  margin: 0;
+  padding-left: 14px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--buddy-text-muted);
+}
+
+/* —— 全站装饰动效工具类（可选挂到容器上） —— */
+@keyframes buddy-border-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+/**
+ * 渐变描边容器：悬停时描边流动感（子内容需自有背景）
+ * 用法：<div class="buddy-glow-frame"><div class="inner">...</div></div>
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .buddy-glow-frame {
+    position: relative;
+    border-radius: var(--buddy-radius);
+    padding: 1px;
+    background: linear-gradient(
+      120deg,
+      rgb(var(--buddy-rgb-brand) / 0.35),
+      rgb(var(--buddy-rgb-accent) / 0.35),
+      rgb(var(--buddy-rgb-honor-gold) / 0.45),
+      rgb(var(--buddy-rgb-teal) / 0.3),
+      rgb(var(--buddy-rgb-brand) / 0.35)
+    );
+    background-size: 240% 100%;
+    transition: box-shadow var(--buddy-duration-sm) var(--buddy-ease-out);
+  }
+
+  .buddy-glow-frame:hover {
+    animation: buddy-border-flow 3.2s linear infinite;
+    box-shadow: 0 12px 40px rgb(var(--buddy-rgb-brand) / 0.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .buddy-glow-frame {
+    border: 1px solid rgb(var(--buddy-rgb-brand) / 0.2);
+    border-radius: var(--buddy-radius);
+    padding: 0;
+  }
+}
+
+/* 链接/次要 CTA：悬停微抬与字间距 */
+.buddy-link-drama {
+  transition:
+    color var(--buddy-duration-sm) var(--buddy-ease-out),
+    letter-spacing var(--buddy-duration-sm) var(--buddy-ease-out),
+    transform var(--buddy-duration-xs) var(--buddy-ease-spring);
+}
+
+.buddy-link-drama:hover {
+  letter-spacing: 0.06em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .buddy-link-drama:hover {
+    letter-spacing: inherit;
+  }
+}
