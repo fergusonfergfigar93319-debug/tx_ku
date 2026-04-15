@@ -4,9 +4,10 @@ import { ref, watch } from 'vue'
 const DARK_STORAGE_KEY = 'buddy-theme-dark'
 const THEME_LABEL_KEY = 'buddy-theme'
 
+/** 未儲存偏好時預設亮色（與 tokens.css :root 亮色系一致；不依賴系統深色） */
 function readStoredDark(): boolean {
   if (typeof localStorage === 'undefined') {
-    return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
+    return false
   }
   const legacy = localStorage.getItem(DARK_STORAGE_KEY)
   if (legacy === '1') return true
@@ -14,7 +15,7 @@ function readStoredDark(): boolean {
   const label = localStorage.getItem(THEME_LABEL_KEY)
   if (label === 'dark') return true
   if (label === 'light') return false
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
+  return false
 }
 
 /** 全局面板：快捷跳转、与顶栏协同的轻量 UI 状态 */
