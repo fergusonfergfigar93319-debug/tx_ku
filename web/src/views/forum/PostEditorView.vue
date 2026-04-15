@@ -105,66 +105,152 @@ async function submit() {
 </template>
 
 <style scoped>
+/* --- 页面标题与步骤引导 --- */
 .page-heading {
-  margin: 0 0 8px;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--buddy-text);
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 0.02em;
 }
 
 .steps {
   margin: 0;
-  font-size: 12px;
-  color: var(--buddy-text-muted);
+  font-size: 13px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .steps strong {
-  color: var(--buddy-primary);
-  font-weight: 600;
+  color: #0ea5e9; /* 亮色系点缀：AI 专属蓝 */
+  font-weight: 700;
+  background: rgba(14, 165, 233, 0.1);
+  padding: 3px 8px;
+  border-radius: 6px;
 }
 
+/* --- 表单主体与 Label 优化 --- */
 .form-main {
   position: relative;
+  padding: 10px 0;
 }
 
+.form-main :deep(.el-form-item__label) {
+  font-weight: 700;
+  color: #334155;
+  padding-bottom: 8px;
+  font-size: 14px;
+}
+
+/* 下拉选择框也统一质感 */
+.form-main :deep(.el-select .el-input__wrapper) {
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02) !important;
+}
+
+/* --- 核心编辑区 (Draft Zone) --- */
 .draft-zone {
   position: relative;
-  border-radius: var(--buddy-radius);
+  border-radius: 16px;
+  background: #f8fafc; /* 极浅的蓝灰底色，形成视觉分组 */
+  padding: 20px;
+  margin: 0 -10px 16px; /* 两侧稍微向外扩展，包裹感更强 */
+  border: 1px solid rgba(15, 23, 42, 0.04);
 }
 
+.draft-zone :deep(.el-input__wrapper),
+.draft-zone :deep(.el-textarea__inner) {
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.02) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 8px 12px; /* 增加文字呼吸感 */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 🚀 高级感来源：输入框焦点反馈，呼吸光晕 */
+.draft-zone :deep(.el-input__wrapper.is-focus),
+.draft-zone :deep(.el-textarea__inner:focus) {
+  border-color: rgba(0, 110, 255, 0.4);
+  box-shadow: 0 0 0 3px rgba(0, 110, 255, 0.1), 0 4px 16px rgba(0, 110, 255, 0.06) !important;
+  background: #ffffff;
+}
+
+/* --- AI 生成状态交互动画 --- */
 .draft-zone.is-ai :deep(.el-input__wrapper),
 .draft-zone.is-ai :deep(.el-textarea__inner) {
-  filter: grayscale(0.15);
-  opacity: 0.88;
+  filter: grayscale(0.2);
+  opacity: 0.6;
+  transform: scale(0.995); /* 生成时底层轻微内缩，凸显上层 Shimmer */
 }
 
+/* 高级毛玻璃遮罩 */
 .ai-shimmer-overlay {
   position: absolute;
   inset: 0;
   z-index: 2;
-  padding: 8px 4px 12px;
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border-radius: var(--buddy-radius);
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(12px); /* 加大模糊半径 */
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
   pointer-events: none;
   display: flex;
   align-items: flex-start;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.9);
 }
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
 }
 
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+  backdrop-filter: blur(0px);
 }
 
+/* --- 底部操作栏与按钮美化 --- */
 .row {
   display: flex;
+  justify-content: flex-end; /* 按钮靠右更符合表单提交直觉 */
   gap: 12px;
-  margin-top: 8px;
+  margin-top: 16px;
+  padding-top: 20px;
+  border-top: 1px dashed rgba(15, 23, 42, 0.08);
+}
+
+/* AI 生成按钮定制化 */
+.row :deep(.el-button:first-child) {
+  background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  color: #0369a1;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.row :deep(.el-button:first-child:hover:not(.is-disabled)) {
+  background: linear-gradient(135deg, #dcfce7 0%, #bae6fd 100%);
+  border-color: rgba(14, 165, 233, 0.4);
+  transform: translateY(-1px);
+}
+
+/* 发布按钮定制化 */
+.row :deep(.el-button:last-child) {
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 0 24px;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  transition: all 0.2s ease;
+}
+
+.row :deep(.el-button:last-child:hover:not(.is-disabled)) {
+  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4);
+  transform: translateY(-1px);
 }
 </style>

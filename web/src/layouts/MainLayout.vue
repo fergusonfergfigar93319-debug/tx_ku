@@ -178,7 +178,11 @@ onBeforeUnmount(() => {
 <template>
   <div class="main-shell buddy-app-container" :data-app-module="appModule.id">
     <a href="#main-content" class="skip-to-main">跳到主要内容</a>
-    <header class="app-header app-header--glass" aria-label="站点主导航">
+    <header
+      class="app-header app-header--glass"
+      :class="{ 'home-header': route.name === 'home' }"
+      aria-label="站点主导航"
+    >
       <div class="header-inner">
         <div class="header-start">
           <BuddyBackButton
@@ -463,6 +467,19 @@ onBeforeUnmount(() => {
     rgb(var(--buddy-rgb-teal) / 0.22) 100%
   );
   pointer-events: none;
+}
+
+/* 首页：强化磨砂层级，与 HomeView 沉浸背景衔接 */
+.app-header.home-header {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.7);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.65) inset, 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.app-header.home-header::after {
+  opacity: 0.65;
 }
 
 .app-header {

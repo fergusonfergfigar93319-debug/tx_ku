@@ -21,6 +21,8 @@ export function buildHomeSwiperCards(agentChatUnlocked: boolean): HomeCardSwiper
       gradient: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 45%, #0ea5e9 100%)',
       coverSrc: withBase('swiper/card-feed.png'),
       to: '/app/feed?tab=news',
+      themeColor: '#3b82f6',
+      themeRgb: '59 130 246',
     },
     {
       id: 'sw-city',
@@ -33,6 +35,8 @@ export function buildHomeSwiperCards(agentChatUnlocked: boolean): HomeCardSwiper
       gradient: 'linear-gradient(135deg, #78350f 0%, #b45309 38%, #f59e0b 88%)',
       coverSrc: withBase('swiper/card-city.png'),
       to: '/app/feed/city',
+      themeColor: '#f59e0b',
+      themeRgb: '245 158 11',
     },
     {
       id: 'sw-forum',
@@ -45,6 +49,8 @@ export function buildHomeSwiperCards(agentChatUnlocked: boolean): HomeCardSwiper
       gradient: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 40%, #db2777 90%)',
       coverSrc: withBase('swiper/card-forum.png'),
       to: '/app/forum',
+      themeColor: '#a855f7',
+      themeRgb: '168 85 247',
     },
     {
       id: 'sw-trend',
@@ -57,6 +63,8 @@ export function buildHomeSwiperCards(agentChatUnlocked: boolean): HomeCardSwiper
       gradient: 'linear-gradient(135deg, #831843 0%, #be185d 42%, #ec4899 100%)',
       coverSrc: withBase('swiper/card-trend.png'),
       to: '/app/trend',
+      themeColor: '#ec4899',
+      themeRgb: '236 72 153',
     },
     {
       id: 'sw-agent',
@@ -71,6 +79,8 @@ export function buildHomeSwiperCards(agentChatUnlocked: boolean): HomeCardSwiper
       gradient: 'linear-gradient(135deg, #0f766e 0%, #059669 45%, #22c55e 100%)',
       coverSrc: withBase('swiper/card-agent.png'),
       to: agentChatUnlocked ? '/app/agent/chat' : '/app/agent',
+      themeColor: '#22d3ee',
+      themeRgb: '34 211 238',
     },
     {
       id: 'sw-me',
@@ -83,6 +93,8 @@ export function buildHomeSwiperCards(agentChatUnlocked: boolean): HomeCardSwiper
       gradient: 'linear-gradient(135deg, #9a3412 0%, #ea580c 50%, #fbbf24 100%)',
       coverSrc: withBase('swiper/card-me.png'),
       to: '/app/me/flow',
+      themeColor: '#f97316',
+      themeRgb: '249 115 22',
     },
   ]
 }

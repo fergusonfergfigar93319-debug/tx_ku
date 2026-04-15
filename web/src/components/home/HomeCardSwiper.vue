@@ -1,19 +1,21 @@
 <!--
-  HomeCardSwiper — 中间主卡、两侧覆盖流（EffectCoverflow + slidesPerView:auto）
+  HomeCardSwiper — EffectCreative 堆叠/3D 覆盖 + 视差 + 首页氛围色联动
 
   依赖：npm install swiper@11
   说明：同目录 HomeCardSwiper-使用说明.md
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Swiper, SwiperSlide } from 'swiper/vue'
-import { Autoplay, EffectCoverflow, Pagination } from 'swiper/modules'
+import { Autoplay, EffectCreative, Pagination, Parallax } from 'swiper/modules'
 import type { Swiper as SwiperClass } from 'swiper/types'
 
 import 'swiper/css'
 import 'swiper/css/pagination'
-import 'swiper/css/effect-coverflow'
+import 'swiper/css/effect-creative'
+
+import { Reading } from '@element-plus/icons-vue'
 
 import type { HomeCardSwiperItem } from './homeCardSwiper.types'
 
@@ -31,20 +33,40 @@ const props = withDefaults(
     fullBleed: false,
     compact: false,
     autoplayDelay: 6000,
-    transitionMs: 680,
+    transitionMs: 600,
   },
 )
 
-const modules = [EffectCoverflow, Autoplay, Pagination]
+const modules = [EffectCreative, Autoplay, Pagination, Parallax]
 
-/** Coverflow：由 stretch / depth 与自适应 slide 宽度填充大屏留白 */
-const coverflowEffectOpts = {
-  rotate: 5,
-  stretch: 180,
-  depth: 160,
-  modifier: 1,
-  slideShadows: false,
-} as const
+/**
+ * EffectCreative：左右滑入纵深 + 轻微旋转（堆叠 / 3D 覆盖，slidesPerView>1 露边）
+ * 非 compact：translate ±120%、z≈-500，与 Swiper 文档「潮流卡片」配置一致。
+ */
+const creativeEffectOpts = computed(() => {
+  const z = props.compact ? 380 : 500
+  const x = props.compact ? '88%' : '120%'
+  return {
+    prev: {
+      shadow: true,
+      translate: [`-${x}`, 0, -z],
+      rotate: [0, 0, props.compact ? -14 : -20],
+    },
+    next: {
+      shadow: true,
+      translate: [x, 0, -z],
+      rotate: [0, 0, props.compact ? 14 : 20],
+    },
+  }
+})
+
+const slidesPerViewCreative = computed(() => (props.compact ? 1.12 : 1.2))
+
+/** 系统偏好减少动效时关闭视差，避免眩晕 */
+const motionOk = ref(true)
+onMounted(() => {
+  motionOk.value = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+})
 
 /** 实例由 @swiper 注入；左右箭头改为手动调用 slidePrev/slideNext，避免 Navigation+loop+auto 下偶发不响应 */
 const swiperRef = ref<SwiperClass | null>(null)
@@ -76,12 +98,39 @@ watch(itemsIdKey, () => {
   }
 })
 
+onBeforeUnmount(() => {
+  applyHomeThemeFromItem(null)
+})
+
+function applyHomeThemeFromItem(item: HomeCardSwiperItem | null) {
+  const root = document.documentElement
+  if (!item) {
+    root.style.removeProperty('--current-theme-color')
+    root.style.removeProperty('--current-theme-rgb')
+    root.style.removeProperty('--home-bg-gradient')
+    return
+  }
+  const rgb = item.themeRgb ?? '99 102 241'
+  root.style.setProperty('--current-theme-color', item.themeColor ?? '#6366f1')
+  root.style.setProperty('--current-theme-rgb', rgb)
+  const dark = root.classList.contains('dark')
+  root.style.setProperty(
+    '--home-bg-gradient',
+    dark
+      ? `radial-gradient(circle at 20% 30%, rgb(${rgb} / 0.16) 0%, #0f172a 52%)`
+      : `radial-gradient(circle at 20% 30%, rgb(${rgb} / 0.07) 0%, #ffffff 50%)`,
+  )
+}
+
 function syncActiveFromSwiper(swiper: SwiperClass) {
   if (!props.items.length) return
   const idx = swiper.realIndex
   if (idx < 0 || idx >= props.items.length) return
   const cur = props.items[idx]
-  if (cur) activeItemId.value = cur.id
+  if (cur) {
+    activeItemId.value = cur.id
+    applyHomeThemeFromItem(cur)
+  }
 }
 
 /**
@@ -131,6 +180,11 @@ function goNext(e?: MouseEvent) {
 
 /** loop 模式下以 realIndex 为准，比 slideChange 更可靠 */
 function onRealIndexChange(swiper: SwiperClass) {
+  syncActiveFromSwiper(swiper)
+}
+
+/** 与文档示例一致：任意 slide 切换即同步主题（含触摸/拖拽中途） */
+function onSlideChange(swiper: SwiperClass) {
   syncActiveFromSwiper(swiper)
 }
 
@@ -226,9 +280,10 @@ function badgeClass(item: HomeCardSwiperItem) {
     <Swiper
       class="home-card-swiper"
       :modules="modules"
-      effect="coverflow"
-      :coverflow-effect="coverflowEffectOpts"
-      :slides-per-view="'auto'"
+      effect="creative"
+      :creative-effect="creativeEffectOpts"
+      :parallax="motionOk"
+      :slides-per-view="slidesPerViewCreative"
       :centered-slides="true"
       :space-between="0"
       :grab-cursor="true"
@@ -253,6 +308,7 @@ function badgeClass(item: HomeCardSwiperItem) {
         waitForTransition: true,
       }"
       @swiper="onSwiper"
+      @slide-change="onSlideChange"
       @real-index-change="onRealIndexChange"
       @slide-change-transition-end="onSlideChangeTransitionEnd"
     >
@@ -264,26 +320,42 @@ function badgeClass(item: HomeCardSwiperItem) {
           :style="{ '--card-bg': item.gradient }"
           @click="onCardClick(item)"
         >
-          <img
-            v-if="item.coverSrc"
-            class="qq-card__cover"
-            :src="item.coverSrc"
-            :alt="item.title"
-            loading="lazy"
-            decoding="async"
-          />
+          <div
+            class="qq-card__parallax-bg"
+            :data-swiper-parallax="motionOk ? '-18%' : undefined"
+          >
+            <div v-if="item.coverSrc" class="qq-card__image-box">
+              <img
+                class="qq-card__cover"
+                :src="item.coverSrc"
+                :alt="item.title"
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+            <div v-else class="news-item__visual qq-card__image-box" aria-hidden="true">
+              <div class="news-item__visual-mesh" />
+              <el-icon class="news-item__visual-ico" :size="36"><Reading /></el-icon>
+              <span class="news-item__visual-badge">{{ item.badge || '主题' }}</span>
+            </div>
+          </div>
           <span v-if="item.badge" :class="badgeClass(item)">{{ item.badge }}</span>
           <span class="qq-card__shine" aria-hidden="true" />
-          <span class="qq-card__body">
-            <span class="qq-card__title">{{ item.title }}</span>
-            <span class="qq-card__sub">{{ item.subtitle }}</span>
-            <span v-if="item.tags?.length && !compact" class="qq-card__tags">
-              <span v-for="tag in item.tags" :key="tag" class="qq-card__tag">{{ tag }}</span>
+          <div
+            class="qq-card__info"
+            :data-swiper-parallax="motionOk ? '-48' : undefined"
+          >
+            <span class="qq-card__body">
+              <span class="qq-card__title">{{ item.title }}</span>
+              <span class="qq-card__sub">{{ item.subtitle }}</span>
+              <span v-if="item.tags?.length && !compact" class="qq-card__tags">
+                <span v-for="tag in item.tags" :key="tag" class="qq-card__tag">{{ tag }}</span>
+              </span>
+              <span v-if="item.to" class="qq-card__hint">{{
+                item.id === activeItemId ? '点击进入' : '滑至中间后进入'
+              }}</span>
             </span>
-            <span v-if="item.to" class="qq-card__hint">{{
-              item.id === activeItemId ? '点击进入' : '滑至中间后进入'
-            }}</span>
-          </span>
+          </div>
         </button>
       </SwiperSlide>
     </Swiper>
@@ -313,20 +385,19 @@ function badgeClass(item: HomeCardSwiperItem) {
 </template>
 
 <style scoped>
-/* 深色舞台（略提亮，避免「纯黑空洞」观感） */
+/* --- 亮色舞台重构 --- */
 .home-card-swiper-wrap {
   position: relative;
-  --qq-bg-0: #141822;
-  --qq-bg-1: #1a1f2e;
-  --qq-bg-2: #1e2434;
-  /* 主卡光带扫过：周期略长、观感更从容（可被 prefers-reduced-motion 关闭） */
+  /* 调整为亮色变量 */
+  --qq-bg-0: #ffffff;
+  --qq-bg-1: #f8fafc;
+  --qq-bg-2: #f1f5f9;
   --qq-shine-duration: 14s;
   --qq-shine-ease: cubic-bezier(0.42, 0.02, 0.58, 0.98);
-  /* 统一主曲线：位移 / 缩放 / 透明度 / 滤镜 共用（略偏 ease-out，收尾更顺） */
   --qq-ease-carousel: cubic-bezier(0.22, 0.82, 0.28, 1);
-  margin: 0 calc(-1 * var(--buddy-space, 16px)) 24px;
-  /* 左右内边距一致，避免舞台与轮播轨道视觉重心偏移 */
-  padding: 16px clamp(12px, 4vw, 20px) 26px;
+
+  margin: 0 calc(-1 * var(--buddy-space, 16px)) 16px; /* 减小底部外边距 */
+  padding: 12px clamp(12px, 4vw, 20px) 16px; /* 大幅压减上下无用留白 */
   /*
    * 不可用 overflow-x: clip：loop 末张居中时，右侧衔接的首屏克隆会被裁掉，表现为「右侧无法循环」。
    * 页级已有 html { overflow-x: clip }，此处保持横向可见以露出循环带。
@@ -334,12 +405,12 @@ function badgeClass(item: HomeCardSwiperItem) {
   overflow-x: visible;
   overflow-y: visible;
   border-radius: var(--buddy-radius, 14px);
-  background: radial-gradient(120% 80% at 50% -20%, rgb(59 91 200 / 0.2), transparent 52%),
+  /* 亮色系渐变底色与微妙的光晕 */
+  background:
+    radial-gradient(120% 80% at 50% -20%, rgba(59, 130, 246, 0.06), transparent 52%),
     linear-gradient(180deg, var(--qq-bg-0) 0%, var(--qq-bg-1) 42%, var(--qq-bg-2) 100%);
-  border: 1px solid rgb(255 255 255 / 0.08);
-  box-shadow:
-    0 16px 40px rgb(0 0 0 / 0.22),
-    inset 0 1px 0 rgb(255 255 255 / 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
 }
 
 .home-card-swiper-wrap::before {
@@ -349,7 +420,8 @@ function badgeClass(item: HomeCardSwiperItem) {
   border-radius: inherit;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.55;
+  /* 保持氛围光的动画，但调整为适合亮色的透明度 */
+  opacity: 0.35;
   background:
     radial-gradient(ellipse 90% 55% at 15% 20%, rgb(59 130 246 / 0.22), transparent 50%),
     radial-gradient(ellipse 70% 50% at 88% 75%, rgb(168 85 247 / 0.18), transparent 48%),
@@ -369,37 +441,36 @@ function badgeClass(item: HomeCardSwiperItem) {
   }
 }
 
-/* 相对居中内容区拉满视口宽度；父级宜为整页内容宽（如单列 / grid 跨列） */
+/* 相对居中内容区拉满视口宽度；父级宜为整页内容宽（如单列 / grid 跨列）— 与亮色主舞台一致 */
 .home-card-swiper-wrap--fullbleed {
   width: 100vw;
   max-width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
-  margin-bottom: 28px;
-  padding-top: 26px;
-  padding-bottom: 32px;
+  margin-bottom: 16px;
+  padding-top: 12px;
+  padding-bottom: 16px;
   padding-left: max(16px, env(safe-area-inset-left));
   padding-right: max(16px, env(safe-area-inset-right));
   border-radius: 0;
   border-left: none;
   border-right: none;
-  box-shadow:
-    0 20px 56px rgb(0 0 0 / 0.28),
-    inset 0 1px 0 rgb(255 255 255 / 0.06);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
   background:
-    radial-gradient(100% 120% at 50% -30%, rgb(59 91 200 / 0.28), transparent 55%),
-    linear-gradient(180deg, #121722 0%, #1a1f2e 38%, #1e2638 100%);
+    radial-gradient(100% 120% at 50% -30%, rgba(59, 130, 246, 0.08), transparent 55%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 38%, #f1f5f9 100%);
 }
 
 .home-card-swiper-wrap--fullbleed::before {
-  opacity: 0.62;
+  opacity: 0.35;
   animation-duration: 18s;
 }
 
 @media (min-width: 900px) {
   .home-card-swiper-wrap--fullbleed {
-    padding-top: 30px;
-    padding-bottom: 36px;
+    padding-top: 14px;
+    padding-bottom: 18px;
     padding-left: max(24px, env(safe-area-inset-left));
     padding-right: max(24px, env(safe-area-inset-right));
   }
@@ -438,26 +509,26 @@ function badgeClass(item: HomeCardSwiperItem) {
 }
 
 .home-card-swiper-eyebrow {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgb(148 163 184);
+  color: #64748b; /* 亮色模式下的次级文字 */
 }
 
 .home-card-swiper-lead {
   margin: 0 0 12px;
   font-size: 12px;
   line-height: 1.65;
-  color: rgb(186 198 216);
+  color: #475569;
 }
 
 .home-card-swiper-lead--short {
   margin: 0 0 10px;
   font-size: 12px;
   line-height: 1.45;
-  color: rgb(186 198 216);
+  color: #475569;
 }
 
 .home-card-swiper-ribbon {
@@ -477,50 +548,39 @@ function badgeClass(item: HomeCardSwiperItem) {
   font-weight: 600;
   letter-spacing: 0.03em;
   border-radius: 999px;
-  border: 1px solid rgb(255 255 255 / 0.12);
-  background: rgb(15 23 42 / 0.4);
-  color: rgb(203 213 225);
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.06) inset;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  color: #334155;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .home-card-swiper-title {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   font-size: clamp(17px, 2.5vw, 20px);
   font-weight: 800;
   letter-spacing: 0.06em;
-  background: linear-gradient(
-    105deg,
-    #f8fafc 0%,
-    #c7d2fe 22%,
-    #a5f3fc 48%,
-    #e9d5ff 72%,
-    #f8fafc 100%
-  );
+  /* 亮色模式下的高饱和渐变标题 */
+  background: linear-gradient(105deg, #0f172a 0%, #1e3a8a 22%, #0369a1 48%, #4c1d95 72%, #0f172a 100%);
   background-size: 220% auto;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 2px 8px rgb(0 0 0 / 0.35));
-  animation: qq-title-shimmer 8s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.06));
 }
 
 .home-card-swiper-sub {
   margin: 0;
   font-size: 12px;
   line-height: 1.45;
-  color: rgb(148 163 184);
+  color: #475569;
 }
 
 .home-card-swiper-spotlight {
-  margin: 14px 14px 0;
-  padding: 12px 14px;
+  margin: 4px 14px 0; /* 缩减顶部位移，让其贴紧卡片 */
+  padding: 10px 14px;
   border-radius: 12px;
-  border: 1px solid rgb(255 255 255 / 0.1);
-  background: linear-gradient(
-    148deg,
-    rgb(15 23 42 / 0.58) 0%,
-    rgb(30 41 59 / 0.45) 100%
-  );
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   display: flex;
@@ -528,7 +588,7 @@ function badgeClass(item: HomeCardSwiperItem) {
   align-items: flex-start;
   gap: 4px;
   text-align: left;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .home-card-swiper-spotlight__kicker {
@@ -536,13 +596,13 @@ function badgeClass(item: HomeCardSwiperItem) {
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgb(56 189 248);
+  color: #0284c7;
 }
 
 .home-card-swiper-spotlight__title {
   font-size: 15px;
   font-weight: 800;
-  color: rgb(248 250 252);
+  color: #0f172a;
   letter-spacing: 0.02em;
   line-height: 1.3;
 }
@@ -550,7 +610,7 @@ function badgeClass(item: HomeCardSwiperItem) {
 .home-card-swiper-spotlight__desc {
   font-size: 12px;
   line-height: 1.5;
-  color: rgb(186 198 216);
+  color: #475569;
 }
 
 .home-card-swiper-spotlight--inline {
@@ -612,14 +672,17 @@ function badgeClass(item: HomeCardSwiperItem) {
 }
 
 .home-card-swiper-wrap--compact :deep(.home-card-swiper .swiper-slide) {
-  /* 勿對寬度使用 !important：slidesPerView:auto 時會阻斷 Swiper 量測，輪播區可能高度為 0 */
-  width: min(100%, clamp(280px, 45vw, 720px));
-  flex-shrink: 0;
-  min-height: clamp(184px, 28vw, 252px);
+  /* EffectCreative + slidesPerView：寬度由 Swiper 計算，勿覆寫 */
+  min-height: clamp(160px, 22vh, 220px);
+  max-height: min(40vh, 260px);
 }
 
 .home-card-swiper-wrap--compact :deep(.qq-card) {
-  min-height: clamp(176px, 30vw, 244px);
+  /*
+   * 16:9 在寬屏會隨 slide 寬度把高度撐滿視窗；用 max-height 與 vh 限制首屏佔比。
+   */
+  min-height: clamp(160px, 22vh, 220px);
+  max-height: min(40vh, 260px);
   aspect-ratio: 16 / 9;
   border-radius: 16px;
 }
@@ -681,11 +744,12 @@ function badgeClass(item: HomeCardSwiperItem) {
 
 .home-card-swiper-wrap--compact .home-card-swiper :deep(.swiper-pagination-bullet) {
   width: 6px;
-  height: 6px;
+  height: 5px;
 }
 
 .home-card-swiper-wrap--compact .home-card-swiper :deep(.swiper-pagination-bullet-active) {
-  width: 20px;
+  width: 32px;
+  height: 5px;
 }
 
 .home-card-swiper-stage {
@@ -696,9 +760,16 @@ function badgeClass(item: HomeCardSwiperItem) {
   perspective: 1400px;
   perspective-origin: 50% 44%;
   /* 防止 flex 子項在 Swiper 尚未完成量測時被壓成 0 高度 */
-  min-height: clamp(188px, 32vw, 380px);
+  /* 舞台最小高度适当压低，防止撑开多余空白 */
+  min-height: clamp(160px, 30vw, 340px);
 }
 
+.home-card-swiper-wrap--compact .home-card-swiper-stage {
+  min-height: clamp(150px, min(28vw, 38vh), 280px);
+  max-height: min(44vh, 300px);
+}
+
+/* --- 控制按钮亮色化 --- */
 .home-card-swiper-nav {
   position: absolute;
   z-index: 8;
@@ -711,16 +782,13 @@ function badgeClass(item: HomeCardSwiperItem) {
   height: 46px;
   margin: 0;
   padding: 0;
-  border: 1px solid rgb(255 255 255 / 0.18);
   border-radius: 999px;
-  background: linear-gradient(155deg, rgb(30 41 59 / 0.72) 0%, rgb(15 23 42 / 0.55) 100%);
-  backdrop-filter: blur(12px) saturate(1.2);
-  color: rgb(248 250 252);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  color: #334155;
   cursor: pointer;
-  box-shadow:
-    0 8px 28px rgb(0 0 0 / 0.42),
-    0 0 0 1px rgb(255 255 255 / 0.06) inset,
-    0 0 28px rgb(56 189 248 / 0.12);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(12px) saturate(1.2);
   transition:
     background 0.28s var(--qq-ease-carousel),
     border-color 0.28s var(--qq-ease-carousel),
@@ -737,12 +805,10 @@ function badgeClass(item: HomeCardSwiperItem) {
 }
 
 .home-card-swiper-nav:hover {
-  background: linear-gradient(155deg, rgb(37 99 235 / 0.55) 0%, rgb(79 70 229 / 0.42) 100%);
-  border-color: rgb(147 197 253 / 0.45);
-  box-shadow:
-    0 12px 40px rgb(37 99 235 / 0.35),
-    0 0 0 1px rgb(255 255 255 / 0.14) inset,
-    0 0 40px rgb(56 189 248 / 0.35);
+  background: #ffffff;
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #2563eb;
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
   transform: translateY(-50%) scale(1.06);
 }
 
@@ -795,34 +861,31 @@ function badgeClass(item: HomeCardSwiperItem) {
 }
 
 /*
- * EffectCoverflow：slide 寬度用 clamp + min(100%, …)（不用 !important），讓 Swiper 能正確計算 auto 寬度與 coverflow 位移。
+ * EffectCreative：slide 寬度由 Swiper（slidesPerView）寫入，勿設固定 width。
  */
 .home-card-swiper :deep(.swiper-slide) {
   box-sizing: border-box;
-  width: min(100%, clamp(300px, 50vw, 900px));
   flex-shrink: 0;
-  max-width: 100%;
   overflow: visible;
   display: flex;
   justify-content: center;
   align-items: stretch;
   min-height: clamp(196px, 34vw, 360px);
   transform-style: preserve-3d;
-  transition: opacity var(--qq-swiper-dur, 680ms) var(--qq-ease-carousel);
-}
-
-@media (min-width: 900px) {
-  .home-card-swiper :deep(.swiper-slide) {
-    width: min(100%, clamp(480px, 65vw, 1000px));
-  }
+  transition:
+    transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity var(--qq-swiper-dur, 680ms) var(--qq-ease-carousel);
 }
 
 .home-card-swiper :deep(.swiper-slide:not(.swiper-slide-active) .qq-card) {
   filter: brightness(0.68) saturate(0.8);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.45);
+  box-shadow:
+    0 12px 28px rgb(0 0 0 / 0.22),
+    0 20px 40px -10px rgb(var(--current-theme-rgb) / 0.18);
 }
 
 .home-card-swiper :deep(.swiper-slide-active .qq-card) {
+  transform: scale(1.05);
   filter: saturate(1.08) brightness(1.04);
   animation: qq-active-breathe 3.4s ease-in-out infinite;
 }
@@ -831,19 +894,17 @@ function badgeClass(item: HomeCardSwiperItem) {
   0%,
   100% {
     box-shadow:
-      0 36px 72px rgb(0 0 0 / 0.52),
+      var(--meta-shadow-card),
+      0 28px 56px rgb(0 0 0 / 0.28),
       0 0 0 2px rgb(255 255 255 / 0.28) inset,
-      0 0 48px rgb(59 130 246 / 0.22),
-      0 0 72px rgb(139 92 246 / 0.14),
-      0 0 96px rgb(34 211 238 / 0.06);
+      0 0 48px rgb(var(--current-theme-rgb) / 0.22);
   }
   50% {
     box-shadow:
-      0 40px 88px rgb(0 0 0 / 0.48),
+      0 24px 48px -10px rgb(var(--current-theme-rgb) / 0.38),
+      0 32px 64px rgb(0 0 0 / 0.26),
       0 0 0 2px rgb(255 255 255 / 0.34) inset,
-      0 0 72px rgb(96 165 250 / 0.38),
-      0 0 100px rgb(167 139 250 / 0.28),
-      0 0 120px rgb(45 212 191 / 0.12);
+      0 0 64px rgb(var(--current-theme-rgb) / 0.26);
   }
 }
 
@@ -865,26 +926,66 @@ function badgeClass(item: HomeCardSwiperItem) {
 }
 
 .home-card-swiper :deep(.swiper-pagination-bullet) {
+  /* 胶囊短条：未激活更短，激活拉长 + 品牌渐变 */
   width: 7px;
-  height: 7px;
+  height: 6px;
+  border-radius: 999px;
   margin: 0 !important;
-  background: rgb(255 255 255 / 0.35);
+  background: rgb(148 163 184 / 0.45);
   opacity: 1;
   transition:
     transform var(--qq-swiper-dur, 680ms) var(--qq-ease-carousel),
-    width var(--qq-swiper-dur, 680ms) var(--qq-ease-carousel),
+    width 0.38s cubic-bezier(0.33, 0.9, 0.32, 1),
     background var(--qq-swiper-dur, 680ms) var(--qq-ease-carousel),
     opacity var(--qq-swiper-dur, 680ms) var(--qq-ease-carousel);
 }
 
 .home-card-swiper :deep(.swiper-pagination-bullet-active) {
-  width: 26px;
-  border-radius: 7px;
-  background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
+  width: 42px;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--meta-primary),
+    rgb(var(--current-theme-rgb) / 0.95),
+    var(--meta-secondary),
+    var(--meta-accent)
+  );
   box-shadow:
-    0 0 18px rgb(56 189 248 / 0.45),
-    0 0 32px rgb(139 92 246 / 0.25);
+    var(--meta-shadow-card),
+    0 0 18px rgb(var(--current-theme-rgb) / 0.4);
   animation: qq-bullet-pulse 2.4s ease-in-out infinite;
+}
+
+.qq-card__parallax-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+.qq-card__image-box {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.qq-card__image-box img {
+  transform: scale(1.2);
+  transform-origin: center center;
+  transition: transform 0.8s ease-out;
+}
+
+.home-card-swiper :deep(.swiper-slide-active .qq-card__image-box img) {
+  transform: scale(1);
+}
+
+.qq-card__parallax-bg .news-item__visual {
+  min-height: 100%;
+  height: 100%;
 }
 
 .qq-card {
@@ -898,11 +999,13 @@ function badgeClass(item: HomeCardSwiperItem) {
   padding: 0;
   cursor: pointer;
   text-align: left;
-  border-radius: 18px;
+  border-radius: 24px;
   background: var(--card-bg, linear-gradient(135deg, #1e3a8a 0%, #312e81 100%));
   background-color: #1e2433;
   box-shadow:
-    0 14px 36px rgb(0 0 0 / 0.35),
+    var(--meta-shadow-card),
+    0 10px 28px rgb(var(--current-theme-rgb) / 0.14),
+    0 12px 32px rgb(0 0 0 / 0.2),
     0 0 0 1px rgb(255 255 255 / 0.1) inset;
   overflow: hidden;
   transition:
@@ -913,7 +1016,7 @@ function badgeClass(item: HomeCardSwiperItem) {
 
 @media (min-width: 900px) {
   .qq-card {
-    border-radius: 20px;
+    border-radius: 24px;
   }
 }
 
@@ -924,11 +1027,17 @@ function badgeClass(item: HomeCardSwiperItem) {
 
 @media (prefers-reduced-motion: no-preference) {
   .home-card-swiper :deep(.swiper-slide-active .qq-card:hover) {
-    transform: translateY(-4px) scale(1.02);
+    transform: translateY(-4px) scale(1.06);
     box-shadow:
-      0 22px 48px rgb(0 0 0 / 0.42),
+      var(--meta-shadow-card),
+      0 22px 44px rgb(0 0 0 / 0.26),
+      0 20px 40px -10px rgb(var(--current-theme-rgb) / 0.34),
       0 0 0 1px rgb(255 255 255 / 0.14) inset;
   }
+}
+
+.qq-card:active {
+  transform: scale(0.98);
 }
 
 .qq-card__cover {
@@ -1018,12 +1127,26 @@ function badgeClass(item: HomeCardSwiperItem) {
   animation: qq-shine-sweep var(--qq-shine-duration) var(--qq-shine-ease) infinite;
 }
 
-.qq-card__body {
+.qq-card__info {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 2;
+  padding: 0;
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.5s ease 0.2s,
+    transform 0.5s ease 0.2s;
+}
+
+.home-card-swiper :deep(.swiper-slide-active .qq-card__info) {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.qq-card__body {
   padding: 16px 18px 18px;
   background: linear-gradient(180deg, transparent 0%, rgb(0 0 0 / 0.5) 38%, rgb(0 0 0 / 0.75) 100%);
   display: flex;
@@ -1082,16 +1205,6 @@ function badgeClass(item: HomeCardSwiperItem) {
   }
 }
 
-@keyframes qq-title-shimmer {
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
 @keyframes qq-shine-sweep {
   /* 起止略停留，避免光带「整圈连扫」显得急促 */
   0%,
@@ -1114,14 +1227,14 @@ function badgeClass(item: HomeCardSwiperItem) {
   0%,
   100% {
     box-shadow:
-      0 0 14px rgb(56 189 248 / 0.38),
-      0 0 26px rgb(139 92 246 / 0.2);
+      0 0 14px rgb(var(--current-theme-rgb) / 0.4),
+      0 0 26px rgb(var(--current-theme-rgb) / 0.22);
     filter: brightness(1);
   }
   50% {
     box-shadow:
-      0 0 26px rgb(56 189 248 / 0.55),
-      0 0 44px rgb(167 139 250 / 0.35);
+      0 0 26px rgb(var(--current-theme-rgb) / 0.55),
+      0 0 44px rgb(var(--current-theme-rgb) / 0.3);
     filter: brightness(1.12);
   }
 }
@@ -1152,10 +1265,10 @@ function badgeClass(item: HomeCardSwiperItem) {
   .home-card-swiper :deep(.swiper-slide-active .qq-card) {
     animation: none;
     box-shadow:
-      0 36px 72px rgb(0 0 0 / 0.52),
+      var(--meta-shadow-card),
+      0 28px 56px rgb(0 0 0 / 0.32),
       0 0 0 2px rgb(255 255 255 / 0.26) inset,
-      0 0 56px rgb(59 130 246 / 0.2),
-      0 0 80px rgb(139 92 246 / 0.1);
+      0 0 56px rgb(var(--current-theme-rgb) / 0.16);
   }
 
   .home-card-swiper :deep(.swiper-slide-active .qq-card__shine) {
@@ -1170,6 +1283,20 @@ function badgeClass(item: HomeCardSwiperItem) {
   .home-card-swiper :deep(.swiper-slide .qq-card) {
     transform: none;
     filter: none;
+  }
+
+  .home-card-swiper :deep(.qq-card__info) {
+    transition: none;
+  }
+
+  .home-card-swiper :deep(.swiper-slide-active .qq-card__info) {
+    opacity: 1;
+    transform: none;
+  }
+
+  .home-card-swiper :deep(.swiper-slide-active .qq-card__image-box img) {
+    transform: none;
+    transition: none;
   }
 
   .home-card-swiper :deep(.swiper-pagination-bullet) {

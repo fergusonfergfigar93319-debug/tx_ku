@@ -185,6 +185,22 @@
   --el-color-primary-light-7: #93c5fd;
   --el-color-primary-light-9: rgba(37, 99, 235, 0.09);
   --el-color-primary-dark-2: #1d4ed8;
+
+  /*
+   * 元流 · 潮流科技感（极客紫 / 幻影紫 / 极光蓝）
+   * --current-theme-* 由 HomeCardSwiper 随轮播同步，供首页光晕与卡片阴影联动。
+   */
+  --meta-primary: #6366f1; /* 极客紫 */
+  --meta-secondary: #a855f7; /* 幻影紫 */
+  --meta-accent: #22d3ee; /* 极光蓝 */
+  --home-bg-gradient: radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.05) 0%, #ffffff 50%);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  /** 首页轮播当前卡主色（JS 可覆写 inline） */
+  --current-theme-color: #6366f1;
+  --current-theme-rgb: 99 102 241;
+  /** 通透主色投影（卡片 / 指示器，随 --current-theme-rgb 变化） */
+  --meta-shadow-card: 0 20px 40px -10px rgb(var(--current-theme-rgb) / 0.3);
 }
 
 html {
@@ -712,6 +728,8 @@ html.dark {
   /* 与毛玻璃工具类、旧引用兼容 */
   --glass-bg: rgba(15, 23, 42, 0.75);
   --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+
+  --home-bg-gradient: radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.14) 0%, #0f172a 52%);
 
   --buddy-shadow-soft:
     0 10px 28px rgb(0 0 0 / 0.35),

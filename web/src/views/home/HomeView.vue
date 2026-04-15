@@ -58,7 +58,7 @@ const forumPreview = mockPosts.slice(0, 4)
 </script>
 
 <template>
-  <div class="dp-page buddy-page app-page-stack" aria-label="开发者门户首页">
+  <div class="home-view dp-page buddy-page app-page-stack" aria-label="开发者门户首页">
     <div class="dp-page__swiper" aria-label="主题卡片轮播">
       <HomeCardSwiper compact full-bleed :items="homeSwiperCards" />
     </div>
@@ -91,6 +91,20 @@ const forumPreview = mockPosts.slice(0, 4)
 </template>
 
 <style scoped>
+/* 沉浸背景：tokens 基底 + 當前輪播卡主題光暈（--current-theme-rgb 由 HomeCardSwiper 同步） */
+.home-view {
+  background:
+    var(--home-bg-gradient),
+    radial-gradient(ellipse 120% 80% at 50% 0%, rgb(var(--current-theme-rgb) / 0.09), transparent 55%),
+    radial-gradient(ellipse 90% 60% at 100% 100%, rgb(var(--current-theme-rgb) / 0.06), transparent 50%),
+    radial-gradient(circle at 0% 0%, #f0f4ff 0%, transparent 52%),
+    radial-gradient(circle at 100% 100%, #e6e9ff 0%, transparent 48%),
+    #ffffff;
+  min-height: 100vh;
+  box-sizing: border-box;
+  transition: background 0.6s ease;
+}
+
 .dp-page {
   padding-bottom: 36px;
   max-width: min(768px, 100%);
@@ -165,5 +179,48 @@ const forumPreview = mockPosts.slice(0, 4)
 .dp-page__jump-sep {
   color: var(--buddy-text-muted);
   font-weight: 600;
+}
+
+/* 快捷与模块卡片：统一更大圆角 + 柔和阴影（子组件 scoped，用 :deep） */
+.home-view :deep(.dp-page__jump) {
+  border-radius: 18px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  border-color: rgba(15, 23, 42, 0.06);
+}
+
+.home-view :deep(.dp-qs) {
+  border-radius: 20px;
+  box-shadow: 0 6px 28px rgba(15, 23, 42, 0.06);
+}
+
+.home-view :deep(.dp-qs__item) {
+  border-radius: 16px;
+}
+
+.home-view :deep(.dp-metrics) {
+  border-radius: 20px;
+  box-shadow: 0 6px 28px rgba(15, 23, 42, 0.05);
+}
+
+.home-view :deep(.dp-metrics__card) {
+  border-radius: 16px;
+}
+
+.home-view :deep(.dp-hero) {
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.06);
+}
+
+.home-view :deep(.dp-int__card) {
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+}
+
+.home-view :deep(.dp-api),
+.home-view :deep(.dp-status),
+.home-view :deep(.dp-cl),
+.home-view :deep(.dp-fp) {
+  border-radius: 20px;
+  box-shadow: 0 6px 28px rgba(15, 23, 42, 0.05);
 }
 </style>

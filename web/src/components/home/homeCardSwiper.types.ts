@@ -17,4 +17,8 @@ export interface HomeCardSwiperItem {
   tags?: string[]
   /** 轮播底部「当前焦点」一句话，宜比 subtitle 更短 */
   microHint?: string
+  /** 当前卡氛围主色（hex，同步到 :root --current-theme-color） */
+  themeColor?: string
+  /** 同主色的 RGB 分量，空格分隔，供 rgb(var(--current-theme-rgb) / α) */
+  themeRgb?: string
 }
