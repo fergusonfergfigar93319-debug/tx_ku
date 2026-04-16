@@ -469,17 +469,55 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 
-/* 首页：强化磨砂层级，与 HomeView 沉浸背景衔接 */
+/* ==========================================================
+   首頁專屬：深色系玻璃態頂欄 (與 Dark Stage 輪播無縫銜接)
+   ========================================================== */
 .app-header.home-header {
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.7);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.65) inset, 0 8px 24px rgba(15, 23, 42, 0.04);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  background: rgba(15, 23, 42, 0.65); /* 深色夜空底色 */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .app-header.home-header::after {
-  opacity: 0.65;
+  opacity: 0.8; /* 增強底部光效彩帶 */
+}
+
+/* 調整首頁頂欄文字顏色，使其在深色背景下清晰可見 */
+.app-header.home-header .brand {
+  background: linear-gradient(to right, #60a5fa, #c084fc, #38bdf8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 8px rgba(192, 132, 252, 0.4));
+}
+
+.app-header.home-header .nav-link {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.app-header.home-header .nav-link:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.app-header.home-header .nav-link.is-active {
+  color: #60a5fa; /* 亮藍色 */
+  background: rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.3);
+}
+
+.app-header.home-header .header-search__toggle,
+.app-header.home-header .header-cmd,
+.app-header.home-header .header-theme {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.app-header.home-header .header-search__toggle:hover,
+.app-header.home-header .header-cmd:hover,
+.app-header.home-header .header-theme:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 .app-header {

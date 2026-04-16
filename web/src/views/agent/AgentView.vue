@@ -843,10 +843,6 @@ async function refreshCard() {
 </template>
 
 <style scoped>
-.agent-studio {
-  padding-bottom: 28px;
-}
-
 .studio-head {
   margin-bottom: 18px;
 }
@@ -1641,5 +1637,763 @@ async function refreshCard() {
   .chibi-workshop__actions .el-button--primary {
     margin-left: auto;
   }
+}
+
+/* ==========================================================
+   🔮 AI 搭子创作台：终极全息控制台 (Holographic Console)
+   ========================================================== */
+
+/* --- 1. 全局星云背景与基础防抖 --- */
+.agent-studio {
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding-bottom: 60px;
+  background: var(--buddy-page-bg);
+  transition: background 0.8s ease;
+  z-index: 0;
+}
+
+:global(html:not(.dark)) .agent-studio {
+  background:
+    radial-gradient(ellipse 100% 400px at 50% 0%, rgba(37, 99, 235, 0.08) 0%, transparent 100%),
+    linear-gradient(180deg, #f8fafc 0%, var(--buddy-page-bg) 400px);
+}
+
+:global(html.dark) .agent-studio {
+  background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+}
+
+/* 动态深空能量球 */
+:global(html.dark) .agent-studio::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 70vw;
+  height: 70vw;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
+  filter: blur(100px);
+  animation: agent-orb 20s infinite alternate ease-in-out;
+  pointer-events: none;
+  z-index: -1;
+}
+
+:global(html.dark) .agent-studio::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: -10%;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 65%);
+  filter: blur(90px);
+  animation: agent-orb-reverse 18s infinite alternate ease-in-out;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes agent-orb {
+  100% {
+    transform: translate(100px, 50px) scale(1.1);
+  }
+}
+
+@keyframes agent-orb-reverse {
+  100% {
+    transform: translate(-80px, -40px) scale(1.05);
+  }
+}
+
+/* 抹除原有的大白底外壳 */
+.agent-studio .app-layer,
+.agent-studio .app-layer__inner {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* --- 2. 统一瀑布流进场动效 (Staggered Entry) --- */
+.agent-studio-intro,
+.hero-card,
+.chibi-workshop,
+.official-block,
+.buddy-card-surface,
+.studio-actions {
+  opacity: 0;
+  animation: agent-rise-in 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.agent-studio-intro {
+  animation-delay: 0.05s;
+}
+
+.hero-card {
+  animation-delay: 0.15s;
+}
+
+.chibi-workshop {
+  animation-delay: 0.25s;
+}
+
+.official-block {
+  animation-delay: 0.35s;
+}
+
+.buddy-card-surface {
+  animation-delay: 0.45s;
+}
+
+.studio-actions {
+  animation-delay: 0.5s;
+}
+
+@keyframes agent-rise-in {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.98);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* --- 3. 核心 Bento 卡片材质 (Glassmorphism 2.0) --- */
+.agent-studio .buddy-card-surface,
+.agent-studio .hero-card__inner,
+.agent-studio .preset-card,
+.agent-studio .chibi-workshop__preview-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(243, 244, 246, 0.7) 100%) !important;
+  backdrop-filter: blur(30px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  border-top-color: rgba(255, 255, 255, 1) !important;
+  box-shadow:
+    0 12px 30px -10px rgba(15, 23, 42, 0.08),
+    0 1px 1px rgba(255, 255, 255, 0.6) inset !important;
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+/* 暗黑模式霓虹发光卡片 */
+:global(html.dark) .agent-studio .buddy-card-surface,
+:global(html.dark) .agent-studio .hero-card__inner,
+:global(html.dark) .agent-studio .preset-card,
+:global(html.dark) .agent-studio .chibi-workshop__preview-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-top-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow:
+    0 20px 40px -12px rgba(0, 0, 0, 0.8),
+    0 0 20px rgba(99, 102, 241, 0.05),
+    0 1px 1px rgba(255, 255, 255, 0.15) inset !important;
+}
+
+/* 磁悬浮预设卡片 Hover */
+.preset-card:hover:not(:disabled) {
+  transform: translateY(-8px) scale(1.02) !important;
+  border-color: rgba(99, 102, 241, 0.4) !important;
+  box-shadow: 0 24px 40px -10px rgba(99, 102, 241, 0.15) !important;
+  z-index: 2;
+}
+
+:global(html.dark) .preset-card:hover:not(:disabled) {
+  border-color: rgba(99, 102, 241, 0.6) !important;
+  box-shadow:
+    0 32px 60px -15px rgba(0, 0, 0, 1),
+    0 0 40px rgba(99, 102, 241, 0.3),
+    0 1px 1px rgba(255, 255, 255, 0.3) inset !important;
+}
+
+/* --- 4. 赛博朋克流程指引 (Cyber Steps) --- */
+.studio-flow__list {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.6) 100%) !important;
+  backdrop-filter: blur(20px) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+:global(html.dark) .studio-flow__list {
+  background: rgba(30, 41, 59, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.studio-flow__step.is-done .studio-flow__n {
+  background: linear-gradient(135deg, #38bdf8, #8b5cf6, #ec4899) !important;
+  background-size: 200% 200% !important;
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.5) !important;
+  animation: flow-pulse 3s ease infinite !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+.studio-flow__step.is-done .studio-flow__t {
+  color: #38bdf8 !important;
+  font-weight: 800 !important;
+}
+
+@keyframes flow-pulse {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* 流动能量连接线 */
+.studio-flow__sep {
+  background: rgba(148, 163, 184, 0.2) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.studio-flow__step.is-done + .studio-flow__sep::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+  animation: scan-line 2s linear infinite;
+}
+
+@keyframes scan-line {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* --- 5. Q版工坊预览区 (Holographic Scan & Spin) --- */
+.chibi-workshop__preview-ring {
+  position: relative;
+  background: transparent !important;
+  box-shadow: 0 12px 40px rgba(37, 99, 235, 0.15) !important;
+}
+
+/* 旋转科技准星 */
+.chibi-workshop__preview-ring::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px dashed rgba(56, 189, 248, 0.6);
+  border-top-color: #8b5cf6;
+  border-bottom-color: #ec4899;
+  animation: spin-ring 12s linear infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+:global(html.dark) .chibi-workshop__preview-ring::before {
+  border-width: 3px;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.3) inset;
+}
+
+@keyframes spin-ring {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- 6. 深度接管 Element UI 组件 (Sliders, Radios, Selects) --- */
+/* 选项胶囊 (Radio & Selects) */
+.agent-studio :deep(.el-radio-button__inner) {
+  border-radius: 999px !important;
+  border: 1px solid transparent !important;
+  background: rgba(148, 163, 184, 0.1) !important;
+  margin: 4px !important;
+  padding: 8px 20px !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
+  color: var(--buddy-text-secondary) !important;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+:global(html.dark) .agent-studio :deep(.el-radio-button__inner) {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #94a3b8 !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.agent-studio :deep(.el-radio-button.is-active .el-radio-button__inner) {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4) !important;
+  transform: scale(1.05) !important;
+}
+
+/* 能量槽滑块 (Sliders) */
+.agent-studio :deep(.el-slider__runway) {
+  background-color: rgba(148, 163, 184, 0.2) !important;
+  height: 8px !important;
+}
+
+.agent-studio :deep(.el-slider__bar) {
+  background: linear-gradient(90deg, #38bdf8, #8b5cf6) !important;
+  height: 8px !important;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.5) !important;
+}
+
+.agent-studio :deep(.el-slider__button) {
+  border: none !important;
+  background: #fff !important;
+  box-shadow:
+    0 0 0 4px rgba(139, 92, 246, 0.2),
+    0 0 12px rgba(139, 92, 246, 0.8) !important;
+  transition: transform 0.2s;
+}
+
+.agent-studio :deep(.el-slider__button:hover) {
+  transform: scale(1.2);
+  box-shadow:
+    0 0 0 6px rgba(139, 92, 246, 0.3),
+    0 0 16px rgba(139, 92, 246, 1) !important;
+}
+
+/* 隐藏折叠面板粗糙边框 */
+.agent-studio :deep(.el-collapse),
+.agent-studio :deep(.el-collapse-item__header),
+.agent-studio :deep(.el-collapse-item__wrap) {
+  border: none !important;
+  background: transparent !important;
+  color: var(--buddy-text);
+  font-weight: 800;
+}
+
+:global(html.dark) .agent-studio :deep(.el-collapse-item__header) {
+  color: #f8fafc;
+}
+
+/* --- 7. 全息光效标题与标签 --- */
+.studio-title,
+.hero-name-input :deep(.el-input__inner) {
+  background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #0ea5e9 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  font-weight: 900 !important;
+}
+
+:global(html.dark) .studio-title,
+:global(html.dark) .hero-name-input :deep(.el-input__inner) {
+  background: linear-gradient(135deg, #93c5fd 0%, #d8b4fe 50%, #6ee7b7 100%) !important;
+  filter: drop-shadow(0 2px 12px rgba(168, 85, 247, 0.5)) !important;
+}
+
+/* 晶体化名片标签 */
+.agent-studio .tags :deep(.el-tag) {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%) !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  color: #0284c7 !important;
+  border-radius: 8px !important;
+  padding: 0 12px !important;
+  font-weight: 800 !important;
+  font-size: 12px !important;
+}
+
+:global(html.dark) .agent-studio .tags :deep(.el-tag) {
+  color: #7dd3fc !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2) !important;
+}
+
+/* --- 8. CTA 动作按钮流光 --- */
+.studio-actions__primary {
+  animation: btn-flow 3s linear infinite !important;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4) !important;
+  border: none !important;
+  background-size: 200% 100% !important;
+}
+
+.studio-actions__primary:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 12px 32px rgba(124, 58, 237, 0.6) !important;
+  filter: brightness(1.1);
+}
+
+@keyframes btn-flow {
+  0% {
+    background-position: 0% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* 分路气质药丸发光 */
+.chibi-lane-pill {
+  transition: all 0.3s ease !important;
+}
+
+.chibi-lane-pill.is-on {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%) !important;
+  border-color: #8b5cf6 !important;
+  box-shadow:
+    0 0 16px rgba(139, 92, 246, 0.4) inset,
+    0 4px 16px rgba(59, 130, 246, 0.2) !important;
+  transform: scale(1.05);
+}
+
+.chibi-lane-pill.is-on .chibi-lane-pill__short {
+  color: #8b5cf6 !important;
+}
+
+:global(html.dark) .chibi-lane-pill.is-on .chibi-lane-pill__short {
+  color: #c4b5fd !important;
+  text-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global(html.dark) .agent-studio::before,
+  :global(html.dark) .agent-studio::after {
+    animation: none !important;
+  }
+  .studio-flow__step.is-done .studio-flow__n {
+    animation: none !important;
+  }
+  .studio-flow__step.is-done + .studio-flow__sep::after {
+    animation: none !important;
+  }
+  .chibi-workshop__preview-ring::before,
+  .agent-studio .chibi-workshop__preview-ring::before {
+    animation: none !important;
+  }
+  .studio-actions__primary {
+    animation: none !important;
+  }
+  .studio-actions__primary:hover {
+    transform: none !important;
+    filter: none !important;
+  }
+  .agent-studio-intro,
+  .hero-card,
+  .chibi-workshop,
+  .official-block,
+  .buddy-card-surface,
+  .studio-actions {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+  .preset-card:hover:not(:disabled) {
+    transform: none !important;
+  }
+  .agent-studio :deep(.el-slider__button:hover) {
+    transform: none !important;
+  }
+  .preset-card.is-selected {
+    animation: none !important;
+  }
+}
+
+/* ==========================================================
+   1. 表单控件深度玻璃化 (Inputs & Selects)
+   ========================================================== */
+/* 强制穿透 Element Plus 的输入框外壳 */
+.agent-studio :deep(.el-input__wrapper),
+.agent-studio :deep(.el-select__wrapper) {
+  background: rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02) inset, 0 0 0 1px rgba(203, 213, 225, 0.6) inset !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(12px) !important;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+/* 暗黑模式输入框：深空凝胶态 */
+:global(html.dark) .agent-studio :deep(.el-input__wrapper),
+:global(html.dark) .agent-studio :deep(.el-select__wrapper) {
+  background: rgba(15, 23, 42, 0.4) !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4) inset, 0 0 0 1px rgba(255, 255, 255, 0.08) inset !important;
+}
+
+/* 激活/聚焦状态：爆发电竞高光 */
+.agent-studio :deep(.el-input__wrapper.is-focus),
+.agent-studio :deep(.el-select__wrapper.is-focused) {
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 0 0 2px #8b5cf6 inset, 0 6px 16px rgba(139, 92, 246, 0.2) !important;
+}
+
+:global(html.dark) .agent-studio :deep(.el-input__wrapper.is-focus),
+:global(html.dark) .agent-studio :deep(.el-select__wrapper.is-focused) {
+  background: rgba(30, 41, 59, 0.8) !important;
+  box-shadow: 0 0 0 2px #a855f7 inset, 0 0 20px rgba(168, 85, 247, 0.4) !important;
+}
+
+/* 表单文字颜色适配 */
+.agent-studio :deep(.el-input__inner) { color: var(--buddy-text) !important; font-weight: 600 !important; }
+:global(html.dark) .agent-studio :deep(.el-input__inner) { color: #f8fafc !important; }
+
+/* ==========================================================
+   2. 官方成品搭子卡片 (Preset Cards Holographic Upgrade)
+   ========================================================== */
+.preset-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.8) 100%) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 8px 24px -6px rgba(15, 23, 42, 0.06), 0 1px 1px rgba(255, 255, 255, 0.6) inset !important;
+  border-radius: 24px !important;
+}
+
+:global(html.dark) .preset-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.8), 0 1px 1px rgba(255, 255, 255, 0.15) inset !important;
+}
+
+/* 选中状态：呼吸能量场 */
+.preset-card.is-selected {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4) inset, 0 12px 32px rgba(59, 130, 246, 0.25) !important;
+  transform: translateY(-4px) scale(1.02);
+  animation: preset-pulse 3s infinite alternate ease-in-out;
+}
+:global(html.dark) .preset-card.is-selected {
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.5) inset, 0 0 24px rgba(139, 92, 246, 0.4) !important;
+}
+
+@keyframes preset-pulse {
+  0% { filter: brightness(1); }
+  100% { filter: brightness(1.08); }
+}
+
+/* 卡片内小图标与标签 */
+.preset-card__role { background: rgba(59, 130, 246, 0.1) !important; color: #2563eb !important; border-radius: 8px !important; }
+:global(html.dark) .preset-card__role { background: rgba(139, 92, 246, 0.2) !important; color: #c4b5fd !important; }
+.preset-card__name { font-weight: 900 !important; color: var(--buddy-text) !important; }
+:global(html.dark) .preset-card__name { color: #f8fafc !important; }
+
+/* ==========================================================
+   3. 自定义色板与工坊按钮 (Swatches & Actions)
+   ========================================================== */
+/* 调色板按钮：发光晶体 */
+.chibi-swatch {
+  border-radius: 12px !important;
+  border: 2px solid transparent !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1), 0 2px 4px inset rgba(255, 255, 255, 0.4) !important;
+}
+.chibi-swatch.is-on {
+  transform: scale(1.15) !important;
+  border-color: #fff !important;
+  box-shadow: 0 0 0 2px #a855f7, 0 8px 20px rgba(168, 85, 247, 0.4) !important;
+}
+
+/* 工坊底部动作按钮 */
+.chibi-workshop__actions .el-button {
+  border-radius: 14px !important;
+  font-weight: 700 !important;
+  backdrop-filter: blur(10px) !important;
+}
+.chibi-workshop__actions .el-button:not(.el-button--primary) {
+  background: rgba(255, 255, 255, 0.6) !important; border-color: rgba(203, 213, 225, 0.8) !important;
+}
+:global(html.dark) .chibi-workshop__actions .el-button:not(.el-button--primary) {
+  background: rgba(30, 41, 59, 0.6) !important; border-color: rgba(255, 255, 255, 0.15) !important; color: #e2e8f0 !important;
+}
+
+/* ==========================================================
+   4. 折叠面板无缝融合 (Collapse Panel)
+   ========================================================== */
+.agent-studio :deep(.el-collapse) {
+  border: none !important;
+}
+.agent-studio :deep(.el-collapse-item__header) {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: var(--buddy-text) !important;
+}
+:global(html.dark) .agent-studio :deep(.el-collapse-item__header) {
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc !important;
+}
+.agent-studio :deep(.el-collapse-item__wrap) {
+  background: transparent !important;
+  border-bottom: none !important;
+}
+.agent-studio :deep(.el-collapse-item__content) {
+  padding-top: 20px !important;
+  padding-bottom: 8px !important;
+}
+
+/* ==========================================================
+   🛠️ Q版形象工坊：全息兵工厂 (Holographic Workshop)
+   ========================================================== */
+
+/* --- 1. 左侧投影舱 (Holographic Comms Pod) --- */
+.agent-studio .chibi-workshop__preview-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(241, 245, 249, 0.6) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 24px 48px -12px rgba(37, 99, 235, 0.15), inset 0 2px 12px rgba(255, 255, 255, 0.8) !important;
+  /* 注入科幻蓝图网格纹理 */
+  background-image:
+    linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px) !important;
+  background-size: 20px 20px !important;
+  border-radius: 28px !important;
+  padding: 24px 20px !important;
+}
+
+:global(html.dark) .agent-studio .chibi-workshop__preview-card {
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 32px 64px -16px rgba(0, 0, 0, 0.9), inset 0 2px 16px rgba(255, 255, 255, 0.05) !important;
+  background-image:
+    linear-gradient(rgba(139, 92, 246, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 92, 246, 0.05) 1px, transparent 1px) !important;
+}
+
+/* 旋转科技准星 HUD 环 */
+.agent-studio .chibi-workshop__preview-ring {
+  background: transparent !important;
+  box-shadow: none !important;
+  position: relative;
+  z-index: 1;
+}
+.agent-studio .chibi-workshop__preview-ring::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  border: 2px dashed rgba(139, 92, 246, 0.5);
+  border-top: 3px solid #38bdf8;
+  border-bottom: 3px solid #ec4899;
+  animation: hud-scan-spin 10s linear infinite;
+  box-shadow: 0 0 24px rgba(139, 92, 246, 0.3) inset;
+}
+@keyframes hud-scan-spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 预览图增加全息发光边框（根节点 class 为 .agent-chibi） */
+.agent-studio .chibi-workshop__preview-ring .agent-chibi {
+  border: 3px solid #fff !important;
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.6) !important;
+}
+:global(html.dark) .agent-studio .chibi-workshop__preview-ring .agent-chibi {
+  border-color: #0f172a !important;
+}
+
+/* --- 2. 赛博机械按键 (Tactile Cyber-Pills) --- */
+.agent-studio .chibi-lane-pill {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.6) 100%) !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  border-bottom: 3px solid rgba(203, 213, 225, 0.9) !important; /* 物理厚度感 */
+  border-radius: 16px !important;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important; /* 弹簧动效 */
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04) !important;
+}
+
+:global(html.dark) .agent-studio .chibi-lane-pill {
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.6) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-bottom: 3px solid rgba(0, 0, 0, 0.4) !important;
+}
+
+.agent-studio .chibi-lane-pill:hover:not(.is-on) {
+  transform: translateY(-4px) scale(1.02) !important;
+  border-color: rgba(139, 92, 246, 0.4) !important;
+  box-shadow: 0 12px 24px rgba(139, 92, 246, 0.15) !important;
+}
+
+/* 选中按下状态：赛博能量流转 */
+.agent-studio .chibi-lane-pill.is-on {
+  transform: translateY(2px) !important; /* 被按下去的真实质感 */
+  border-bottom-width: 1px !important; /* 厚度消失 */
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(56, 189, 248, 0.1) 100%) !important;
+  border: 1px solid #8b5cf6 !important;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4), inset 0 4px 12px rgba(139, 92, 246, 0.2) !important;
+}
+
+.agent-studio .chibi-lane-pill.is-on .chibi-lane-pill__short {
+  background: linear-gradient(135deg, #7c3aed, #0ea5e9) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  font-weight: 900 !important;
+  filter: drop-shadow(0 2px 4px rgba(139, 92, 246, 0.3)) !important;
+}
+:global(html.dark) .agent-studio .chibi-lane-pill.is-on .chibi-lane-pill__short {
+  background: linear-gradient(135deg, #c4b5fd, #7dd3fc) !important;
+}
+
+/* --- 3. 宝石色板 (Gemstone Swatches) --- */
+.agent-studio .chibi-swatch {
+  border-radius: 12px !important;
+  /* 强烈的宝石倒角与内部高光 */
+  box-shadow:
+    inset -2px -3px 6px rgba(0, 0, 0, 0.2),
+    inset 2px 3px 6px rgba(255, 255, 255, 0.6),
+    0 4px 10px rgba(15, 23, 42, 0.15) !important;
+  border: 2px solid rgba(255, 255, 255, 0.4) !important;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.agent-studio .chibi-swatch:hover {
+  transform: translateY(-4px) scale(1.1) !important;
+}
+
+/* 选中的宝石：能量爆发荧光 */
+.agent-studio .chibi-swatch.is-on {
+  transform: scale(1.2) !important;
+  border-color: #fff !important;
+  box-shadow:
+    inset -2px -3px 6px rgba(0, 0, 0, 0.2),
+    inset 2px 3px 6px rgba(255, 255, 255, 0.8),
+    0 0 20px currentColor !important; /* 借用自身的颜色散发荧光 */
+}
+
+/* --- 4. 等离子滑块 (Plasma Sliders) --- */
+.agent-studio :deep(.el-slider__runway) {
+  background: rgba(203, 213, 225, 0.5) !important;
+  border-radius: 8px !important;
+  height: 10px !important;
+}
+:global(html.dark) .agent-studio :deep(.el-slider__runway) {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.agent-studio :deep(.el-slider__bar) {
+  background: linear-gradient(90deg, #38bdf8, #8b5cf6) !important;
+  height: 10px !important;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.6) !important;
+}
+.agent-studio :deep(.el-slider__button) {
+  border: 3px solid #fff !important;
+  background: #8b5cf6 !important;
+  width: 22px !important;
+  height: 22px !important;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.8), 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+.agent-studio :deep(.el-slider__button:hover),
+.agent-studio :deep(.el-slider__button.dragging) {
+  transform: scale(1.3) !important;
+  box-shadow: 0 0 0 6px rgba(139, 92, 246, 0.3), 0 0 20px #8b5cf6 !important;
+}
+
+/* --- 5. HUD 面板标题 --- */
+.agent-studio .chibi-panel__title {
+  display: inline-block;
+  background: linear-gradient(135deg, #1e3a8a, #7c3aed);
+  -webkit-background-clip: text; color: transparent;
+  font-weight: 900; letter-spacing: 0.05em;
+  padding-bottom: 6px; margin-bottom: 16px;
+  border-bottom: 3px solid rgba(139, 92, 246, 0.3);
+}
+:global(html.dark) .agent-studio .chibi-panel__title {
+  background: linear-gradient(135deg, #93c5fd, #d8b4fe);
+  -webkit-background-clip: text; color: transparent; border-bottom-color: rgba(168, 85, 247, 0.4);
 }
 </style>

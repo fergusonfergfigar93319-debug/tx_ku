@@ -1189,4 +1189,170 @@ onBeforeUnmount(() => {
     opacity: 0.85;
   }
 }
+
+/* ==========================================================
+   🔮 AI 搭子聊天室：終極全息通訊艙 (Holographic Comms)
+   ========================================================== */
+
+/* --- 1. 沉浸式星雲背景與全域透傳 --- */
+.agent-chat-root {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.8s ease;
+  z-index: 0;
+}
+
+:global(html:not(.dark)) .agent-chat-root {
+  background: radial-gradient(ellipse 100% 400px at 50% 0%, rgba(37, 99, 235, 0.08) 0%, transparent 100%), linear-gradient(180deg, #f8fafc 0%, var(--buddy-page-bg) 400px);
+}
+
+:global(html.dark) .agent-chat-root {
+  background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+}
+
+/* 暗黑模式：動態深空能量波 (極光) */
+:global(html.dark) .agent-chat-aurora__blob--a { background: radial-gradient(circle, rgba(124, 58, 237, 0.25) 0%, transparent 68%); }
+:global(html.dark) .agent-chat-aurora__blob--b { background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%); }
+:global(html.dark) .agent-chat-aurora__blob--c { background: radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, transparent 72%); }
+
+/* 抹除所有 App Layer 的實心背景 */
+.agent-chat-root .app-layer,
+.agent-chat-root .app-layer__inner {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* --- 2. 通訊艙主體 (Glassmorphism Bento) --- */
+/* 將三個 layer 合併視覺，變成一個完整的高透玻璃艙 */
+.agent-chat-layer--head .app-layer__inner,
+.agent-chat-layer--feed .app-layer__inner,
+.agent-chat-layer--composer .app-layer__inner {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(243, 244, 246, 0.6) 100%) !important;
+  backdrop-filter: blur(30px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 0 12px 32px -10px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* 頂部和底部加上倒角，中間直角拼合 */
+.agent-chat-layer--head .app-layer__inner { border-radius: 28px 28px 0 0 !important; border-bottom: none !important; }
+.agent-chat-layer--feed .app-layer__inner { border-radius: 0 !important; border-top: none !important; border-bottom: none !important; }
+.agent-chat-layer--composer .app-layer__inner { border-radius: 0 0 28px 28px !important; border-top: none !important; padding: 16px 20px 24px !important; }
+
+/* 暗黑模式霓虹玻璃艙 */
+:global(html.dark) .agent-chat-root .app-layer__inner {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.8), 0 0 24px rgba(99, 102, 241, 0.05) !important;
+}
+:global(html.dark) .agent-chat-layer--head .app-layer__inner { border-top-color: rgba(255, 255, 255, 0.25) !important; box-shadow: 0 1px 1px rgba(255, 255, 255, 0.15) inset !important; }
+
+/* --- 3. 陣營化對話氣泡 (Floating Bubbles) --- */
+/* AI 氣泡：極光微透白 */
+.bubble--assistant {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.8) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 1) !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.6) inset !important;
+  border-radius: 4px 20px 20px 20px !important;
+}
+:global(html.dark) .bubble--assistant {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 1px 1px rgba(255, 255, 255, 0.1) inset !important;
+}
+
+/* 用戶氣泡：高亮電競漸變 */
+.bubble--user {
+  background: linear-gradient(135deg, #38bdf8 0%, #6366f1 50%, #8b5cf6 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3) !important;
+  border-radius: 20px 4px 20px 20px !important;
+}
+:global(html.dark) .bubble--user {
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4), 0 1px 2px rgba(255, 255, 255, 0.3) inset !important;
+}
+
+/* --- 4. 底部輸入區與磁吸指令 (Magnetic Hover) --- */
+/* 快捷指令膠囊 */
+.quick-chip {
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  color: #0284c7 !important;
+  backdrop-filter: blur(10px) !important;
+}
+:global(html.dark) .quick-chip { background: rgba(30, 41, 59, 0.6) !important; border-color: rgba(56, 189, 248, 0.2) !important; color: #7dd3fc !important; }
+
+.quick-chip:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.05) !important;
+  background: linear-gradient(135deg, #38bdf8, #8b5cf6) !important;
+  color: #fff !important; border-color: transparent !important;
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4) !important;
+}
+
+/* 輸入框高亮 */
+.composer-input :deep(.el-textarea__inner) {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(203, 213, 225, 0.6) !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02) inset !important;
+  backdrop-filter: blur(10px) !important;
+}
+:global(html.dark) .composer-input :deep(.el-textarea__inner) {
+  background: rgba(15, 23, 42, 0.5) !important; border-color: rgba(255, 255, 255, 0.1) !important; color: #f8fafc !important;
+}
+.composer-input :deep(.el-textarea__inner:focus) {
+  background: rgba(255, 255, 255, 0.95) !important; border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2), 0 4px 12px rgba(56, 189, 248, 0.1) !important;
+}
+
+/* 發送按鈕 (全息流光) */
+.composer-send {
+  background: linear-gradient(120deg, #38bdf8, #6366f1, #8b5cf6, #38bdf8) !important;
+  background-size: 300% auto !important;
+  border: none !important; border-radius: 14px !important; font-weight: 800 !important;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4) !important;
+  animation: btn-flow 4s linear infinite !important;
+}
+.composer-send:hover {
+  transform: translateY(-2px) scale(1.05) !important;
+  box-shadow: 0 10px 24px rgba(99, 102, 241, 0.6) !important; filter: brightness(1.1);
+}
+
+@keyframes btn-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+/* --- 5. 頂部狀態列全息細節 --- */
+/* 頂部名稱漸變 */
+.chat-head__title-row .title {
+  background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #0ea5e9 100%) !important;
+  -webkit-background-clip: text !important; background-clip: text !important; color: transparent !important;
+}
+:global(html.dark) .chat-head__title-row .title {
+  background: linear-gradient(135deg, #93c5fd 0%, #d8b4fe 50%, #6ee7b7 100%) !important;
+  filter: drop-shadow(0 2px 8px rgba(168, 85, 247, 0.4)) !important;
+}
+
+/* 調整搭子按鈕 */
+.chat-head__studio-link {
+  border-radius: 999px !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  color: #0284c7 !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+}
+:global(html.dark) .chat-head__studio-link { background: rgba(30, 41, 59, 0.6) !important; border-color: rgba(56, 189, 248, 0.3) !important; color: #7dd3fc !important; }
+.chat-head__studio-link:hover {
+  background: linear-gradient(135deg, #38bdf8, #8b5cf6) !important; color: #fff !important; border-color: transparent !important;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4) !important; transform: translateY(-2px);
+}
 </style>

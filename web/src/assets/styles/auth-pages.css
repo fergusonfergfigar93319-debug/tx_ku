@@ -1448,3 +1448,228 @@
   font-weight: 600;
   font-size: 13px;
 }
+
+/* ==========================================================
+   1. 珠光全息背景：注入极光色块，为玻璃折射提供光源
+   ========================================================== */
+.auth-page,
+.login-container,
+.register-container {
+  /* 强制铺满全屏，防止被全局亮色底色覆盖 */
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  /* 极其细腻的亮色珠光打底 */
+  background-color: #f8fafc;
+  background-image:
+    radial-gradient(at 0% 0%, hsla(253, 88%, 90%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(196, 90%, 85%, 1) 0px, transparent 50%);
+  z-index: 0;
+}
+
+/* 覆盖早期 .auth-shell::before 装饰框；光球用 z-index:0 以免被浅色底遮挡 */
+.auth-page.auth-shell::before,
+.login-container.auth-shell::before {
+  content: '';
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  inset: auto;
+  border: none;
+  box-shadow: none;
+  background: linear-gradient(135deg, #7c3aed, #3b82f6);
+  border-radius: 50%;
+  top: 10%;
+  left: 20%;
+  filter: blur(80px);
+  opacity: 0.6;
+  animation: float-orb-1 10s infinite alternate ease-in-out;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.auth-page.auth-shell::after,
+.login-container.auth-shell::after {
+  content: '';
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: linear-gradient(135deg, #06b6d4, #8b5cf6);
+  border-radius: 50%;
+  bottom: 10%;
+  right: 20%;
+  filter: blur(70px);
+  opacity: 0.5;
+  animation: float-orb-2 12s infinite alternate ease-in-out;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@keyframes float-orb-1 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(60px, 40px) scale(1.1);
+  }
+}
+
+@keyframes float-orb-2 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(-60px, -40px) scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-page.auth-shell::before,
+  .login-container.auth-shell::before,
+  .auth-page.auth-shell::after,
+  .login-container.auth-shell::after {
+    animation: none;
+  }
+}
+
+/* ==========================================================
+   2. 赛博霜化玻璃卡片：极致的物理厚度感
+   ========================================================== */
+.auth-card.auth-glass-card.el-card,
+.el-card.auth-card.login-card,
+.el-card.auth-card.register-card {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 32px !important; /* 更夸张的现代感圆角 */
+  border: none !important;
+
+  /* 降低白度，拉高模糊，让背后的紫/蓝光球透过来！ */
+  background: rgba(255, 255, 255, 0.55) !important;
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+
+  /* 极致高光切边：模拟真实玻璃被光线照亮的边缘 */
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  box-shadow:
+    0 32px 64px rgba(15, 23, 42, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset !important;
+
+  padding: 48px 36px !important;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .auth-card.auth-glass-card.el-card:hover,
+  .el-card.auth-card.login-card:hover,
+  .el-card.auth-card.register-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow:
+      0 40px 80px rgba(15, 23, 42, 0.12),
+      0 0 0 2px rgba(255, 255, 255, 0.8) inset !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-card.auth-glass-card.el-card:hover,
+  .el-card.auth-card.login-card:hover,
+  .el-card.auth-card.register-card:hover {
+    transform: none;
+  }
+}
+
+/* ==========================================================
+   3. 控件精雕：告别 B 端感（全局 CSS 用 .auth-page 替代 :deep）
+   ========================================================== */
+.auth-title {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  /* 标题加上高对比度的极光色 */
+  background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #0284c7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 0 0 8px 0;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-bottom: 32px;
+}
+
+.auth-page .el-input__wrapper {
+  background: rgba(255, 255, 255, 0.7) !important;
+  border-radius: 16px !important; /* 更圆润 */
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.02),
+    0 0 0 1px rgba(255, 255, 255, 1) inset !important; /* 纯白内发光 */
+  padding: 6px 16px !important;
+  transition: all 0.3s ease !important;
+}
+
+.auth-page .el-input__wrapper.is-focus {
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow:
+    0 0 0 2px #60a5fa inset,
+    0 8px 24px rgba(59, 130, 246, 0.15) !important;
+}
+
+.auth-page .el-input__inner {
+  height: 42px !important;
+  font-size: 15px !important;
+}
+
+.auth-page .el-button--primary {
+  width: 100%;
+  height: 52px;
+  border-radius: 16px;
+  border: none;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  /* 强烈的潮流渐变 */
+  background: linear-gradient(120deg, #2563eb, #8b5cf6, #06b6d4, #2563eb);
+  background-size: 300% auto;
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.3);
+  transition: all 0.5s ease;
+  animation: btn-flow 6s linear infinite;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .auth-page .el-button--primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 32px rgba(139, 92, 246, 0.4);
+    filter: brightness(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-page .el-button--primary {
+    animation: none;
+  }
+
+  .auth-page .el-button--primary:hover {
+    transform: none;
+  }
+}
+
+@keyframes btn-flow {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 300% center;
+  }
+}

@@ -136,6 +136,13 @@ function newsChannelLabel(n: NewsItem) {
   return '资讯'
 }
 
+/** 霓虹標籤「官方」：來源名含官方／賽事／KPL 等 */
+function isOfficialFeedTag(n: NewsItem) {
+  const pub = n.publisherDisplayName ?? ''
+  const label = newsChannelLabel(n)
+  return /官方|赛训|KPL|赛事|公告|元流/.test(pub) || /官方|KPL|赛事/.test(label)
+}
+
 function fmtDate(iso?: string) {
   if (!iso) return ''
   const d = new Date(iso)
@@ -245,7 +252,7 @@ async function pullRefresh() {
 </script>
 
 <template>
-  <div class="buddy-page discover discover--feed app-page-stack">
+  <div class="buddy-page discover discover--feed feed-view app-page-stack">
     <!-- 频道说明与数据摘要（与下方「主频道切换」分离） -->
     <header class="discover-channel discover-channel--hero" aria-label="版本速递频道">
       <div class="discover-channel__aurora" aria-hidden="true">
@@ -510,7 +517,7 @@ async function pullRefresh() {
               v-for="(n, idx) in filteredNews"
               :id="'news-' + n.id"
               :key="n.id"
-              class="news-item buddy-card-surface"
+              class="feed-item news-item buddy-card-surface"
               :class="['news-item--tone-' + (idx % 4), n.coverUrl ? 'news-item--has-cover' : 'news-item--no-cover']"
             >
               <div v-if="n.coverUrl" class="news-item__media">
@@ -519,17 +526,21 @@ async function pullRefresh() {
               <div v-else class="news-item__visual" aria-hidden="true">
                 <div class="news-item__visual-mesh" />
                 <el-icon class="news-item__visual-ico" :size="36"><Reading /></el-icon>
-                <span class="news-item__visual-badge">{{ gameLabel(n.gameId) || '资讯' }}</span>
+                <span
+                  class="news-item__visual-badge feed-tag"
+                  :class="{ 'feed-tag--official': isOfficialFeedTag(n) }"
+                >{{ gameLabel(n.gameId) || '资讯' }}</span>
               </div>
               <div class="news-item__body">
                 <div class="news-item__eyebrow">
                   <span class="news-item__dot" aria-hidden="true" />
-                  <span>{{ newsChannelLabel(n) }}</span>
+                  <span class="feed-publisher">{{ newsChannelLabel(n) }}</span>
+                  <span v-if="isOfficialFeedTag(n)" class="feed-tag feed-tag--official">官方</span>
                 </div>
-                <h3 class="news-item__title">{{ n.title }}</h3>
-                <p v-if="n.summary" class="news-item__summary">{{ n.summary }}</p>
+                <h3 class="news-item__title feed-title">{{ n.title }}</h3>
+                <p v-if="n.summary" class="news-item__summary feed-excerpt">{{ n.summary }}</p>
                 <div v-if="n.publishedAt || n.gameId" class="news-item__foot">
-                  <span v-if="fmtDate(n.publishedAt)" class="news-item__date">
+                  <span v-if="fmtDate(n.publishedAt)" class="news-item__date feed-date">
                     <el-icon class="news-item__ico" :size="14"><Timer /></el-icon>
                     {{ fmtDate(n.publishedAt) }}
                   </span>
@@ -787,66 +798,12 @@ async function pullRefresh() {
   box-sizing: border-box;
 }
 
-/* 与首页呼应：网格 + 多层 mesh + 纸质噪点（::before/::after） */
+/* 版面層級保留；深空天際線背景改由 .feed-view（見檔末 Neon Bento） */
 .discover--feed {
   position: relative;
   isolation: isolate;
   padding-top: 4px;
   border-radius: 0 0 20px 20px;
-  background-color: rgb(248 250 252 / 0.65);
-  background-image:
-    linear-gradient(165deg, rgb(255 255 255 / 0.5) 0%, transparent 42%),
-    radial-gradient(ellipse 85% 65% at 12% -8%, rgb(var(--buddy-rgb-brand) / 0.09) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 50% at 96% 4%, rgb(var(--buddy-rgb-accent) / 0.075) 0%, transparent 48%),
-    radial-gradient(ellipse 55% 42% at 48% 102%, rgb(var(--buddy-rgb-honor-gold) / 0.055) 0%, transparent 52%),
-    linear-gradient(rgb(255 255 255 / 0.5) 0%, rgb(255 255 255 / 0.5) 100%),
-    linear-gradient(90deg, rgb(37 99 235 / 0.035) 1px, transparent 1px),
-    linear-gradient(rgb(37 99 235 / 0.035) 1px, transparent 1px);
-  background-size:
-    auto,
-    auto,
-    auto,
-    auto,
-    auto,
-    28px 28px,
-    28px 28px;
-  background-position:
-    0 0,
-    0 0,
-    0 0,
-    0 0,
-    0 0,
-    0 0,
-    0 0;
-}
-
-.discover--feed::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  background: linear-gradient(
-    105deg,
-    transparent 0%,
-    rgb(255 255 255 / 0.4) 38%,
-    transparent 72%
-  );
-  opacity: 0.45;
-  mix-blend-mode: soft-light;
-}
-
-.discover--feed::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  opacity: 0.042;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  mix-blend-mode: multiply;
 }
 
 .discover--feed > * {
@@ -2582,6 +2539,232 @@ async function pullRefresh() {
   .news-act:hover,
   .news-act:active {
     transform: none;
+  }
+}
+
+/* ==========================================================
+   1. 沉浸式全局背景 (与首頁一致的 Deep Space)
+   ========================================================== */
+.feed-view {
+  min-height: 100vh;
+  box-sizing: border-box;
+  transition: background 0.6s ease;
+  padding-bottom: 40px;
+}
+
+:global(html:not(.dark)) .feed-view {
+  background: linear-gradient(
+    180deg,
+    #0f172a 0%,
+    #1e293b 150px,
+    #f8fafc 300px,
+    var(--buddy-page-bg) 100%
+  );
+}
+
+:global(html.dark) .feed-view {
+  background:
+    radial-gradient(ellipse 100% 400px at 50% 0%, rgba(59, 130, 246, 0.1) 0%, transparent 100%),
+    linear-gradient(180deg, #0f172a 0%, #020617 100%);
+}
+
+/* ==========================================================
+   2. 粉碎原有的 B 端列表外壳，释放独立卡片
+   ========================================================== */
+:global(.feed-view .el-card),
+:global(.feed-view .app-layer) {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:global(.feed-view .el-card__body),
+:global(.feed-view .app-layer__inner) {
+  padding: 0 !important;
+}
+
+/* 加大资讯列表的间距 */
+:global(.feed-view .list.list--news) {
+  gap: 20px !important;
+}
+
+/* ==========================================================
+   3. 资讯卡片：便当盒重构 (Neon Bento Card)
+   ========================================================== */
+/* 强制覆盖原有的 .news-item 和 .buddy-card-surface */
+:global(.feed-view .feed-item),
+:global(.feed-view .news-item) {
+  margin-bottom: 0 !important;
+  border-radius: 20px !important;
+  padding: 0 !important; /* 让内部图片可以贴边 */
+  position: relative;
+  overflow: hidden;
+  border-left: none !important; /* 彻底删掉原来的左侧彩色竖线 */
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease !important;
+  cursor: pointer;
+}
+
+/* 亮色模式下的卡片质感 */
+:global(html:not(.dark)) .feed-view .feed-item {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.8) 100%) !important;
+  backdrop-filter: blur(24px) saturate(150%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  border-bottom-color: rgba(226, 232, 240, 0.6) !important;
+  box-shadow:
+    0 12px 28px -6px rgba(15, 23, 42, 0.05),
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset !important;
+}
+
+/* 暗黑模式下的霓虹霜化玻璃 */
+:global(html.dark) .feed-view .feed-item {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+  backdrop-filter: blur(24px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-top-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow:
+    0 16px 32px -8px rgba(0, 0, 0, 0.8),
+    0 0 20px rgba(59, 130, 246, 0.05),
+    0 1px 1px rgba(255, 255, 255, 0.15) inset !important;
+  color: #f8fafc !important;
+}
+
+/* 增加卡片内部文本区的内边距，让排版更大气 */
+:global(.feed-view .feed-item .news-item__body) {
+  padding: 22px 24px 24px !important;
+}
+
+/* 修复图片在暗黑模式下的圆角和边框 */
+:global(.feed-view .feed-item .news-item__media) {
+  border-right: 1px solid rgba(15, 23, 42, 0.05);
+}
+:global(html.dark) .feed-view .feed-item .news-item__media {
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ==========================================================
+   4. 磁悬浮 Hover 交互 (Magnetic Hover)
+   ========================================================== */
+:global(.feed-view .feed-item:hover) {
+  transform: translateY(-4px) scale(1.01) !important;
+  z-index: 10;
+}
+
+:global(html:not(.dark)) .feed-view .feed-item:hover {
+  box-shadow:
+    0 24px 48px -12px rgba(37, 99, 235, 0.08),
+    0 8px 16px rgba(15, 23, 42, 0.03),
+    0 0 0 1px rgba(255, 255, 255, 1) inset !important;
+}
+
+:global(html.dark) .feed-view .feed-item:hover {
+  border-color: rgba(96, 165, 250, 0.5) !important;
+  box-shadow:
+    0 24px 48px -12px rgba(0, 0, 0, 0.9),
+    0 0 36px rgba(59, 130, 246, 0.25),
+    0 1px 1px rgba(255, 255, 255, 0.3) inset !important;
+}
+
+/* ==========================================================
+   5. 标签与发布者 (全息极光色)
+   ========================================================== */
+/* 发佈者 (如：元流同频官方) */
+:global(.feed-view .feed-publisher) {
+  font-weight: 800 !important;
+  letter-spacing: 0.05em;
+  background: linear-gradient(135deg, #38bdf8 0%, #a855f7 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+}
+
+:global(html.dark) .feed-view .feed-publisher {
+  filter: drop-shadow(0 2px 8px rgba(168, 85, 247, 0.4)) !important;
+}
+
+/* 官方/赛事 标签 */
+:global(.feed-view .feed-tag) {
+  border-radius: 999px !important;
+  padding: 4px 12px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* 眉角内标签与圆点拉开（避免影响封面角标） */
+:global(.feed-view .news-item__eyebrow .feed-tag) {
+  margin-left: 8px;
+}
+
+/* 针对「官方公告」的特殊胶囊发光 */
+:global(.feed-view .feed-tag--official) {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.2) 100%) !important;
+  color: #d97706 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+:global(html.dark) .feed-view .feed-tag--official {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fbbf24 !important;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.3) !important;
+}
+
+/* 暗色模式下标题与摘要的色彩提亮 */
+:global(html.dark) .feed-view .feed-title {
+  color: #f8fafc !important;
+  font-weight: 800 !important;
+}
+
+:global(html.dark) .feed-view .feed-excerpt,
+:global(html.dark) .feed-view .feed-date {
+  color: #94a3b8 !important;
+}
+
+/* 覆盖原来 tone-X 产生的左侧色条 */
+:global(.feed-view .news-item--tone-0),
+:global(.feed-view .news-item--tone-1),
+:global(.feed-view .news-item--tone-2),
+:global(.feed-view .news-item--tone-3) {
+  border-left: none !important;
+}
+
+:global(.feed-view .news-item__eyebrow) {
+  flex-wrap: wrap !important;
+  row-gap: 8px !important;
+}
+
+/* ==========================================================
+   6. 同步美化右侧边栏卡片 (Aside) 和 顶部工具栏 (Toolbar)
+   ========================================================== */
+:global(html:not(.dark)) .feed-view .aside-card,
+:global(html:not(.dark)) .feed-view .feed-toolbar,
+:global(html:not(.dark)) .feed-view .buddy-feed-cap {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.7) 100%) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 8px 24px -6px rgba(15, 23, 42, 0.05) !important;
+  border-radius: 20px !important;
+}
+
+:global(html.dark) .feed-view .aside-card,
+:global(html.dark) .feed-view .feed-toolbar,
+:global(html.dark) .feed-view .buddy-feed-cap {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+  backdrop-filter: blur(20px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-top-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.8), 0 0 16px rgba(59, 130, 246, 0.05) !important;
+  border-radius: 20px !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global(.feed-view .feed-item),
+  :global(.feed-view .feed-item:hover) {
+    transform: none !important;
+    transition: none !important;
   }
 }
 </style>

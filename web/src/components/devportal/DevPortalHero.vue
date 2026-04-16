@@ -98,14 +98,15 @@ defineProps<{
 .dp-hero__inner {
   position: relative;
   display: grid;
-  gap: 22px;
+  gap: 20px;
   padding: 24px 20px 22px;
 }
 
 @media (min-width: 900px) {
   .dp-hero__inner {
-    grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+    align-items: stretch;
+    gap: 24px;
     padding: 28px 28px 26px;
   }
 }
@@ -212,15 +213,17 @@ defineProps<{
 .dp-hero__aside {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .dp-hero__card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 14px 14px 13px;
-  border-radius: 12px;
+  gap: 6px;
+  min-height: 76px;
+  justify-content: center;
+  padding: 15px 16px 14px;
+  border-radius: 14px;
   border: 1px solid rgb(15 23 42 / 0.07);
   background: rgb(255 255 255 / 0.82);
   box-shadow: 0 2px 12px rgb(15 23 42 / 0.04);

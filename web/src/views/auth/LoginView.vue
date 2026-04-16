@@ -101,7 +101,7 @@ async function devEnvLogin() {
 </script>
 
 <template>
-  <div class="auth-shell auth-shell--login-rich">
+  <div class="auth-shell auth-shell--login-rich auth-page login-container">
     <div class="auth-aurora" aria-hidden="true">
       <div class="auth-aurora__mesh" />
       <div class="auth-aurora__dots" />
@@ -227,12 +227,12 @@ async function devEnvLogin() {
       </aside>
 
       <div class="auth-stack">
-        <header class="auth-brand auth-brand--hide-desktop">
+        <header class="auth-brand auth-brand--hide-desktop auth-header">
           <div class="auth-logo-ring">
             <span class="auth-logo-core">元</span>
           </div>
-          <h1 class="auth-brand-title">元流同频</h1>
-          <p class="auth-brand-sub">电竞 IP × 文旅 × 潮流 · 场景化 AI 体验</p>
+          <h1 class="auth-brand-title auth-title">元流同频</h1>
+          <p class="auth-brand-sub auth-subtitle">电竞 IP × 文旅 × 潮流 · 场景化 AI 体验</p>
           <div class="auth-brand-chips">
             <span class="auth-chip auth-chip--brand">王者电竞气质</span>
             <span class="auth-chip auth-chip--accent">峡谷广场</span>
@@ -240,7 +240,7 @@ async function devEnvLogin() {
           </div>
         </header>
 
-        <el-card class="auth-glass-card auth-glass-card--rift" shadow="never">
+        <el-card class="auth-glass-card auth-glass-card--rift auth-card login-card" shadow="never">
           <template #header>
             <div class="auth-card-head">
               <div class="auth-card-head__visual" aria-hidden="true">

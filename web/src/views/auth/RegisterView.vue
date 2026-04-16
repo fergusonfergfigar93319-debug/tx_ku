@@ -37,7 +37,7 @@ async function submit() {
 </script>
 
 <template>
-  <div class="auth-shell">
+  <div class="auth-shell auth-page register-container">
     <div class="auth-aurora" aria-hidden="true">
       <div class="auth-aurora__mesh" />
       <span class="auth-aurora__blob auth-aurora__blob--a" />
@@ -152,12 +152,12 @@ async function submit() {
       </aside>
 
       <div class="auth-stack">
-        <header class="auth-brand auth-brand--hide-desktop">
+        <header class="auth-brand auth-brand--hide-desktop auth-header">
           <div class="auth-logo-ring">
             <span class="auth-logo-core">元</span>
           </div>
-          <h1 class="auth-brand-title">创建账号</h1>
-          <p class="auth-brand-sub">邮箱注册 · onboarding 建档</p>
+          <h1 class="auth-brand-title auth-title">创建账号</h1>
+          <p class="auth-brand-sub auth-subtitle">邮箱注册 · onboarding 建档</p>
           <div class="auth-brand-chips">
             <span class="auth-chip auth-chip--brand">电竞 IP × 文旅</span>
             <span class="auth-chip auth-chip--accent">峡谷同频</span>
@@ -165,7 +165,7 @@ async function submit() {
           </div>
         </header>
 
-        <el-card class="auth-glass-card auth-glass-card--rift" shadow="never">
+        <el-card class="auth-glass-card auth-glass-card--rift auth-card register-card" shadow="never">
           <template #header>
             <div>
               <p class="auth-card-eyebrow">注册 · Sign up</p>
