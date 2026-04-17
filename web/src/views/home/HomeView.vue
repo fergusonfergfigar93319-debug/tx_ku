@@ -1,368 +1,707 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { RouterLink } from 'vue-router'
+import { useRouter } from 'vue-router'
+import { ChatDotRound, DataLine, Guide, Monitor } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
-import DevPortalHero from '@/components/devportal/DevPortalHero.vue'
-import DevPortalMetrics from '@/components/devportal/DevPortalMetrics.vue'
-import DevPortalQuickstart from '@/components/devportal/DevPortalQuickstart.vue'
-import DevPortalIntegrations from '@/components/devportal/DevPortalIntegrations.vue'
-import DevPortalApiConsole from '@/components/devportal/DevPortalApiConsole.vue'
-import DevPortalStatusStrip from '@/components/devportal/DevPortalStatusStrip.vue'
-import DevPortalChangelog from '@/components/devportal/DevPortalChangelog.vue'
-import DevPortalForumPreview from '@/components/devportal/DevPortalForumPreview.vue'
 import HomeCardSwiper from '@/components/home/HomeCardSwiper.vue'
 import { buildHomeSwiperCards } from '@/data/homeSwiperCards'
-import { MOCK_NEWS, mockPosts } from '@/mock/seedData'
 
+const router = useRouter()
 const user = useUserStore()
 
-/** 保留：QQ 音乐风格主题卡片轮播（≥3 张 loop 两侧露边） */
 const homeSwiperCards = computed(() => buildHomeSwiperCards(user.agentChatUnlocked))
 
-const greeting = computed(() => {
-  const n = user.profile?.nickname?.trim()
-  return n ? `${n}，欢迎进入开发者门户` : '欢迎进入开发者门户'
-})
+function goAgent() {
+  void router.push('/app/agent')
+}
 
-const portalLead = computed(() => {
-  const h = new Date().getHours()
-  if (h < 6) return '夜间构建也要注意休息：凭证与沙箱状态可在下方一站式查看。'
-  if (h < 12) return '上午适合对齐集成计划：先扫一遍功能地图，再拉起第一条示例请求。'
-  if (h < 18) return '下午好：查阅 Changelog 与论坛讨论，确认是否有影响集成的变更。'
-  return '晚上好：适合跑通沙箱联调；智能体工作台可用于场景化验收。'
-})
+function goForum() {
+  void router.push('/app/forum')
+}
 
-const metricsItems = computed(() => [
-  {
-    label: '资讯条目',
-    value: String(MOCK_NEWS.length),
-    hint: '打开资讯流',
-    to: '/app/feed',
-  },
-  {
-    label: '社区帖子',
-    value: String(mockPosts.length),
-    hint: '开发者讨论',
-    to: '/app/forum',
-  },
-  {
-    label: '沙箱 / 智能体',
-    value: user.agentChatUnlocked ? '已解锁' : '待解锁',
-    hint: user.agentChatUnlocked ? '进入对话' : '前往工作台',
-    to: user.agentChatUnlocked ? '/app/agent/chat' : '/app/agent',
-  },
-])
+function goFeed() {
+  void router.push('/app/feed')
+}
 
-const changelogItems = MOCK_NEWS.slice(0, 5)
-const forumPreview = mockPosts.slice(0, 4)
+function goMe() {
+  void router.push('/app/me')
+}
 </script>
 
 <template>
-  <div class="home-view home-view--dp dp-page buddy-page app-page-stack" aria-label="开发者门户首页">
-    <div class="dp-page__swiper" aria-label="主题卡片轮播">
-      <HomeCardSwiper compact full-bleed :items="homeSwiperCards" />
+  <div class="home-view buddy-page app-page-stack nova-page-wrapper" aria-label="首页">
+    <!-- 全寬沉浸展區：不受 .nova-container 1440px 限制 -->
+    <section class="nova-hero-fullbleed" aria-label="主题精选展区">
+      <div class="nova-hero-fullbleed__inner nova-hero-fullbleed__inner--frame">
+        <div class="nova-spotlight-shell nova-spotlight-shell--fullscreen">
+          <div class="nova-section-head nova-section-head--spotlight">
+            <div class="nova-spotlight-head">
+              <span class="nova-spotlight-kicker" aria-hidden="true">SPOTLIGHT</span>
+              <h2 class="nova-title nova-title--spotlight">主题精选</h2>
+            </div>
+            <span class="nova-subtitle nova-subtitle--spotlight">SWIPE OR CLICK</span>
+          </div>
+
+          <div
+            class="nova-carousel-stage"
+            :style="{
+              '--nova-swiper-dur': '760ms',
+              '--nova-swiper-ease': 'cubic-bezier(0.16, 1, 0.3, 1)',
+            }"
+          >
+            <HomeCardSwiper compact embed-in-parent :items="homeSwiperCards" :transition-ms="760" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="nova-container">
+      <section class="nova-matrix-section" aria-label="元流矩阵">
+        <div class="nova-section-head">
+          <h2 class="nova-title">元流矩阵 <span class="nova-tag">MATRIX</span></h2>
+          <p class="nova-desc">快速跃迁至核心模块与沙箱功能</p>
+        </div>
+
+        <div class="nova-bento-grid">
+          <div
+            class="nova-bento-card theme-purple"
+            role="button"
+            tabindex="0"
+            @click="goAgent"
+            @keydown.enter.prevent="goAgent"
+          >
+            <div class="nova-card-glass">
+              <div class="nova-icon-hub"><el-icon><ChatDotRound /></el-icon></div>
+              <div class="nova-text-hub">
+                <h3>AI 搭子工坊</h3>
+                <p>定制专属电竞伙伴，赛后复盘与深度情感链接。</p>
+              </div>
+              <div class="nova-arrow">→</div>
+            </div>
+          </div>
+
+          <div
+            class="nova-bento-card theme-blue"
+            role="button"
+            tabindex="0"
+            @click="goForum"
+            @keydown.enter.prevent="goForum"
+          >
+            <div class="nova-card-glass">
+              <div class="nova-icon-hub"><el-icon><Monitor /></el-icon></div>
+              <div class="nova-text-hub">
+                <h3>峡谷广场</h3>
+                <p>潮流共创，组队开黑与社区高光互动。</p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="nova-bento-card theme-cyan"
+            role="button"
+            tabindex="0"
+            @click="goFeed"
+            @keydown.enter.prevent="goFeed"
+          >
+            <div class="nova-card-glass">
+              <div class="nova-icon-hub"><el-icon><Guide /></el-icon></div>
+              <div class="nova-text-hub">
+                <h3>版本速递</h3>
+                <p>全网最新电竞资讯与官方动态汇总。</p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="nova-bento-card theme-orange"
+            role="button"
+            tabindex="0"
+            @click="goMe"
+            @keydown.enter.prevent="goMe"
+          >
+            <div class="nova-card-glass">
+              <div class="nova-icon-hub"><el-icon><DataLine /></el-icon></div>
+              <div class="nova-text-hub">
+                <h3>身份档案</h3>
+                <p>管理沙箱凭证与个人数字身份数据。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
-
-    <DevPortalHero :greeting="greeting" :lead="portalLead" />
-
-    <DevPortalMetrics :items="metricsItems" />
-
-    <nav class="dp-page__jump" aria-label="本页导航">
-      <span class="dp-page__jump-label">跳转</span>
-      <RouterLink class="dp-page__jump-link" :to="{ name: 'home', hash: '#dp-credentials' }">凭证</RouterLink>
-      <span class="dp-page__jump-sep" aria-hidden="true">·</span>
-      <RouterLink class="dp-page__jump-link" :to="{ name: 'home', hash: '#home-news' }">Changelog</RouterLink>
-      <span class="dp-page__jump-sep" aria-hidden="true">·</span>
-      <RouterLink class="dp-page__jump-link" :to="{ name: 'home', hash: '#home-forum' }">讨论</RouterLink>
-    </nav>
-
-    <DevPortalQuickstart />
-
-    <DevPortalIntegrations />
-
-    <DevPortalApiConsole />
-
-    <DevPortalStatusStrip />
-
-    <DevPortalChangelog :items="changelogItems" />
-
-    <DevPortalForumPreview :posts="forumPreview" />
   </div>
 </template>
 
 <style scoped>
 /* ==========================================================
-   1. 全局页面背景 (完美融合深浅色模式)
+   NOVA AURORA V14 (臻享水晶重构版 - 极致清透，色彩映射)
    ========================================================== */
+
 .home-view {
+  box-sizing: border-box;
+}
+
+/* --- 1. 强制全屏破壁 (保持完美 V10 结构不动) --- */
+.nova-page-wrapper {
+  position: relative;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  margin-left: calc(50% - 50vw) !important;
   min-height: 100vh;
   box-sizing: border-box;
-  transition: background 0.6s ease;
+
+  background-color: #f8fafc;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.18) 0%, transparent 50%),
+    radial-gradient(circle at 90% 30%, rgba(14, 165, 233, 0.18) 0%, transparent 50%),
+    radial-gradient(circle at 50% 100%, rgba(168, 85, 247, 0.15) 0%, transparent 60%),
+    linear-gradient(rgba(15, 23, 42, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+  background-attachment: fixed;
+  overflow-x: hidden;
 }
 
-:global(html:not(.dark)) .home-view {
+:global(html.dark) .nova-page-wrapper {
+  background-color: #0f172a;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 90% 30%, rgba(14, 165, 233, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 50% 100%, rgba(168, 85, 247, 0.18) 0%, transparent 60%),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+.nova-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 28px clamp(20px, 4vw, 48px) 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* --- 主題精選：全寬沉浸帶（不再強制大屏 min-height，避免輪播下方成片空白） --- */
+.nova-hero-fullbleed {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  min-height: 0;
+  padding: clamp(10px, 1.8vw, 18px) max(10px, env(safe-area-inset-left)) clamp(8px, 1.5vh, 20px)
+    max(10px, env(safe-area-inset-right));
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.nova-hero-fullbleed__inner {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+/* 與下方矩陣欄寬對齊，減少超寬螢幕兩側死空 */
+.nova-hero-fullbleed__inner--frame {
+  max-width: min(1440px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(12px, 3vw, 32px);
+  padding-right: clamp(12px, 3vw, 32px);
+  box-sizing: border-box;
+}
+
+.nova-spotlight-shell {
+  --nova-tr: var(--current-theme-rgb, 99 102 241);
+  position: relative;
+  padding: clamp(18px, 2.4vw, 28px);
+  border-radius: 56px;
+  isolation: isolate;
+  overflow: visible;
+
+  /* 基底：靛紫冰盒 + 主題色浸染，與頁面淺灰底形成強對比 */
   background:
-    radial-gradient(ellipse 120% 320px at 50% 0%, rgb(var(--current-theme-rgb) / 0.12) 0%, transparent 100%),
-    linear-gradient(180deg, #0f172a 0%, #1e293b 260px, #e2e8f0 320px, #f8fafc 400px, var(--buddy-page-bg) 600px);
+    radial-gradient(ellipse 100% 88% at 50% 0%, rgb(var(--nova-tr) / 0.2) 0%, transparent 58%),
+    linear-gradient(
+      165deg,
+      rgb(224 231 255 / 0.92) 0%,
+      rgb(241 245 255 / 0.88) 38%,
+      rgb(248 250 252 / 0.97) 72%,
+      rgb(var(--nova-tr) / 0.06) 100%
+    );
+  border: 2px solid rgb(var(--nova-tr) / 0.32);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.65) inset,
+    0 2px 0 rgb(var(--nova-tr) / 0.25) inset,
+    0 36px 72px rgb(15 23 42 / 0.14),
+    0 20px 48px rgb(var(--nova-tr) / 0.15),
+    0 0 1px rgb(15 23 42 / 0.08);
+  transition:
+    background 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.9s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-:global(html.dark) .home-view {
+.nova-spotlight-shell--fullscreen {
+  width: 100%;
+  max-width: none;
+  border-radius: clamp(22px, 3.5vw, 40px);
+  padding: clamp(14px, 1.8vw, 22px) clamp(14px, 2vw, 24px) clamp(12px, 1.6vw, 20px);
+}
+
+.nova-spotlight-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.72),
+    inset 0 -1px 0 rgb(var(--nova-tr) / 0.12),
+    inset 0 0 72px rgb(var(--nova-tr) / 0.1);
+  transition: box-shadow 0.85s ease;
+}
+
+.nova-spotlight-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
   background:
-    radial-gradient(ellipse 120% 320px at 50% 0%, rgb(var(--current-theme-rgb) / 0.18) 0%, transparent 100%),
-    linear-gradient(180deg, #0f172a 0%, #020617 100%);
+    radial-gradient(circle at 8% 45%, rgb(56 189 248 / 0.12) 0%, transparent 38%),
+    radial-gradient(circle at 92% 55%, rgb(168 85 247 / 0.12) 0%, transparent 40%);
+  mix-blend-mode: multiply;
+  opacity: 0.85;
 }
 
-.home-view--dp.app-page-stack { gap: 24px; padding-top: 12px; }
-.dp-page__swiper { margin-bottom: 32px; flex-shrink: 0; }
-
-/* ==========================================================
-   2. 彻底粉碎丑陋的外部大方块 (释放真实的独立卡片)
-   ========================================================== */
-.home-view :deep(.dp-metrics),
-.home-view :deep(.dp-qs),
-.home-view :deep(.dp-int) {
-  background: transparent !important;
-  background-color: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-}
-
-/* ==========================================================
-   3. BENTO BOX 独立便当盒卡片 (亮色模式)
-   ========================================================== */
-:global(html:not(.dark)) .home-view :deep(.dp-hero),
-:global(html:not(.dark)) .home-view :deep(.dp-metrics__card),
-:global(html:not(.dark)) .home-view :deep(.dp-qs__item),
-:global(html:not(.dark)) .home-view :deep(.dp-int__card),
-:global(html:not(.dark)) .home-view :deep(.dp-api),
-:global(html:not(.dark)) .home-view :deep(.dp-status),
-:global(html:not(.dark)) .home-view :deep(.dp-cl),
-:global(html:not(.dark)) .home-view :deep(.dp-fp) {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.6) 100%) !important;
-  backdrop-filter: blur(20px) saturate(150%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.9) !important;
-  border-bottom-color: rgba(226, 232, 240, 0.6) !important;
-  box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.5) inset !important;
-  border-radius: 20px !important;
-  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
-}
-
-/* ==========================================================
-   4. BENTO BOX 独立便当盒卡片 (暗黑模式 - 霓虹霜化玻璃)
-   ========================================================== */
-:global(html.dark) .home-view :deep(.dp-hero),
-:global(html.dark) .home-view :deep(.dp-metrics__card),
-:global(html.dark) .home-view :deep(.dp-qs__item),
-:global(html.dark) .home-view :deep(.dp-int__card),
-:global(html.dark) .home-view :deep(.dp-api),
-:global(html.dark) .home-view :deep(.dp-status),
-:global(html.dark) .home-view :deep(.dp-cl),
-:global(html.dark) .home-view :deep(.dp-fp) {
-  /* 注入微弱的深蓝紫底光，打破死灰 */
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
-  backdrop-filter: blur(24px) saturate(200%) !important;
-  /* 提亮外部物理边框 */
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-top-color: rgba(255, 255, 255, 0.2) !important;
-  /* 核心：内发光 (Inset) + 外部弥散光晕 (Glow) */
+:global(html.dark) .nova-spotlight-shell {
+  background:
+    radial-gradient(ellipse 100% 90% at 50% -5%, rgb(var(--nova-tr) / 0.28) 0%, transparent 55%),
+    linear-gradient(
+      165deg,
+      rgb(30 41 59 / 0.95) 0%,
+      rgb(15 23 42 / 0.92) 48%,
+      rgb(15 23 42 / 0.88) 100%
+    );
+  border-color: rgb(var(--nova-tr) / 0.45);
   box-shadow:
-    0 16px 32px -8px rgba(0, 0, 0, 0.8),
-    0 0 20px rgba(59, 130, 246, 0.08),
-    0 1px 1px rgba(255, 255, 255, 0.15) inset !important;
-  border-radius: 20px !important;
-  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
-  color: #f8fafc !important; /* 保证文字颜色 */
+    0 0 0 1px rgb(255 255 255 / 0.06) inset,
+    0 32px 64px rgb(0 0 0 / 0.55),
+    0 0 80px rgb(var(--nova-tr) / 0.22),
+    0 1px 0 rgb(var(--nova-tr) / 0.2) inset;
 }
 
-/* 修复暗色模式下的小字颜色 */
-:global(html.dark) .home-view :deep(.dp-metrics__label),
-:global(html.dark) .home-view :deep(.dp-metrics__k),
-:global(html.dark) .home-view :deep(.dp-metrics__hint),
-:global(html.dark) .home-view :deep(.dp-hero p) {
-  color: #94a3b8 !important;
-}
-
-/* ==========================================================
-   5. 统一磁悬浮悬停特效 (Hover)
-   ========================================================== */
-.home-view :deep(.dp-hero):hover,
-.home-view :deep(.dp-metrics__card):hover,
-.home-view :deep(.dp-qs__item):hover,
-.home-view :deep(.dp-int__card):hover,
-.home-view :deep(.dp-api):hover,
-.home-view :deep(.dp-status):hover,
-.home-view :deep(.dp-cl):hover,
-.home-view :deep(.dp-fp):hover {
-  transform: translateY(-4px) scale(1.02) !important;
-}
-
-/* 暗色模式的专属 Hover 光晕爆发 */
-:global(html.dark) .home-view :deep(.dp-hero):hover,
-:global(html.dark) .home-view :deep(.dp-metrics__card):hover,
-:global(html.dark) .home-view :deep(.dp-qs__item):hover,
-:global(html.dark) .home-view :deep(.dp-int__card):hover,
-:global(html.dark) .home-view :deep(.dp-api):hover,
-:global(html.dark) .home-view :deep(.dp-status):hover,
-:global(html.dark) .home-view :deep(.dp-cl):hover,
-:global(html.dark) .home-view :deep(.dp-fp):hover {
-  border-color: rgba(96, 165, 250, 0.5) !important;
+:global(html.dark) .nova-spotlight-shell::before {
   box-shadow:
-    0 24px 48px -12px rgba(0, 0, 0, 0.9),
-    0 0 30px rgba(59, 130, 246, 0.25),
-    0 1px 1px rgba(255, 255, 255, 0.3) inset !important;
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    inset 0 -1px 0 rgb(var(--nova-tr) / 0.2),
+    inset 0 0 80px rgb(var(--nova-tr) / 0.12);
+}
+
+:global(html.dark) .nova-spotlight-shell::after {
+  mix-blend-mode: screen;
+  opacity: 0.5;
+}
+
+.nova-section-head--spotlight {
+  position: relative;
+  z-index: 1;
+  margin-bottom: clamp(16px, 2vw, 22px);
+  padding: 4px 4px 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.nova-spotlight-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.nova-spotlight-kicker {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  color: rgb(var(--nova-tr));
+  text-shadow: 0 0 28px rgb(var(--nova-tr) / 0.35);
+}
+
+:global(html.dark) .nova-spotlight-kicker {
+  color: rgb(186 230 253);
+  text-shadow: 0 0 24px rgb(var(--nova-tr) / 0.45);
+}
+
+.nova-title--spotlight {
+  font-size: clamp(26px, 3.6vw, 34px);
+  margin: 0;
+  letter-spacing: 0.02em;
+  background: linear-gradient(
+    100deg,
+    #0f172a 12%,
+    rgb(var(--nova-tr)) 160%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 rgb(255 255 255 / 0.45));
+}
+
+:global(html.dark) .nova-title--spotlight {
+  background: linear-gradient(100deg, #f8fafc 8%, rgb(var(--nova-tr)) 140%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 2px 8px rgb(0 0 0 / 0.45));
+}
+
+.nova-subtitle--spotlight {
+  align-self: flex-end;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: rgb(51 65 85);
+  background: rgb(255 255 255 / 0.55);
+  border: 1px solid rgb(var(--nova-tr) / 0.22);
+  box-shadow: 0 4px 14px rgb(15 23 42 / 0.06);
+}
+
+:global(html.dark) .nova-subtitle--spotlight {
+  color: rgb(203 213 225);
+  background: rgb(15 23 42 / 0.55);
+  border-color: rgb(var(--nova-tr) / 0.35);
+  box-shadow: 0 4px 20px rgb(0 0 0 / 0.35);
+}
+
+/* --- 2. 輪播區：NOVA AURORA V16 完美融合 --- */
+.nova-section-head { margin-bottom: 32px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.nova-title { font-size: 32px; font-weight: 900; color: #0f172a; margin: 0; letter-spacing: 0.5px; }
+:global(html.dark) .nova-title { color: #f8fafc; }
+.nova-subtitle { font-size: 13px; font-weight: 800; color: #94a3b8; letter-spacing: 2px; }
+
+/* 還原主題精選標題列：避免被上方通用 .nova-section-head 覆寫 */
+.nova-section-head.nova-section-head--spotlight {
+  margin-bottom: clamp(16px, 2vw, 22px);
+  padding: 4px 4px 0;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 /* ==========================================================
-   6. 数据穿透爆改：点亮沉闷的数字与标题
+   NOVA AURORA V16 (完美融合版 - 消除横向穿模，重塑比例)
    ========================================================== */
-/* 为 Metrics 里面的大数字加上极光渐变 */
-.home-view :deep(.dp-metrics__value),
-.home-view :deep(.dp-metrics__v),
-.home-view :deep(.dp-metrics__card strong) {
-  background: linear-gradient(135deg, #38bdf8 0%, #a855f7 100%) !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  color: transparent !important;
-  font-weight: 900 !important;
-}
 
-/* 暗色模式下，大数字和欢迎语自带霓虹发光 */
-:global(html.dark) .home-view :deep(.dp-metrics__value),
-:global(html.dark) .home-view :deep(.dp-metrics__v),
-:global(html.dark) .home-view :deep(.dp-metrics__card strong) {
-  filter: drop-shadow(0 2px 8px rgba(168, 85, 247, 0.4)) !important;
-}
+/* 核心 1：撤销全屏强行破壁，彻底透明化，完美融入外层玻璃框 */
+.nova-carousel-stage {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 20px 0 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
-:global(html.dark) .home-view :deep(.dp-hero h1),
-:global(html.dark) .home-view :deep(.dp-hero .dp-hero__title),
-:global(html.dark) .home-view :deep(.dp-hero .dp-hero__greeting) {
-  background: linear-gradient(to right, #f8fafc, #93c5fd) !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  color: transparent !important;
-  filter: drop-shadow(0 2px 10px rgba(147, 197, 253, 0.3)) !important;
-}
-
-/* ==========================================================
-   7. 胶囊跳跃导航条 (Jump Nav)
-   ========================================================== */
-.home-view :deep(.dp-page__jump) {
-  border-radius: 999px !important;
-  padding: 12px 32px !important;
-  margin: 8px auto 16px !important;
-  width: fit-content !important;
-  display: flex !important;
-  gap: 16px !important;
-  align-items: center !important;
-}
-
-:global(html:not(.dark)) .home-view :deep(.dp-page__jump) {
-  background: rgba(255, 255, 255, 0.8) !important;
-  border: 1px solid rgba(255, 255, 255, 1) !important;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
-}
-
-:global(html.dark) .home-view :deep(.dp-page__jump) {
-  background: rgba(15, 23, 42, 0.7) !important;
-  backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 16px rgba(59, 130, 246, 0.15) !important;
-}
-
-:global(html.dark) .home-view :deep(.dp-page__jump-link) {
-  color: #60a5fa !important;
-  text-shadow: 0 0 8px rgba(96, 165, 250, 0.4) !important;
-}
-
-:global(html.dark) .home-view :deep(.dp-page__jump-label) {
-  color: #94a3b8 !important;
-}
-
-/* ==========================================================
-   暴力破解：強制消除所有首頁組件的 Element Plus / App Layer 外殼
-   ========================================================== */
-:global(.home-view .el-card),
-:global(.home-view .app-layer),
-:global(.home-view .buddy-card-surface) {
-  background: transparent !important;
-  background-color: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 60%) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
-:global(.home-view .el-card__body),
-:global(.home-view .app-layer__inner) {
-  padding: 0 !important; /* 消除外殼自帶的內邊距，讓裡面的 Bento Box 撐滿 */
+.nova-carousel-stage :deep(.home-card-swiper),
+.nova-carousel-stage :deep(.swiper),
+.nova-carousel-stage :deep(.swiper-wrapper) {
+  width: 100% !important;
+  max-width: 1040px !important;
+  overflow: visible !important;
+  background: transparent !important;
+  margin: 0 auto !important;
 }
 
-/* ==========================================================
-   重新賦予內部元素 Bento Box 質感 (亮色模式)
-   ========================================================== */
-:global(html:not(.dark)) .home-view .dp-metrics,
-:global(html:not(.dark)) .home-view .dp-hero,
-:global(html:not(.dark)) .home-view .dp-api,
-:global(html:not(.dark)) .home-view .dp-status,
-:global(html:not(.dark)) .home-view .dp-cl,
-:global(html:not(.dark)) .home-view .dp-fp {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.6) 100%) !important;
-  backdrop-filter: blur(24px) saturate(150%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(150%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.9) !important;
-  border-radius: 24px !important;
+.nova-carousel-stage :deep(.swiper-slide-shadow-left),
+.nova-carousel-stage :deep(.swiper-slide-shadow-right),
+.nova-carousel-stage :deep(.swiper-slide-shadow-top),
+.nova-carousel-stage :deep(.swiper-slide-shadow-bottom) { display: none !important; }
+
+/* 核心 2：优化侧边卡片的景深，解决过度模糊和发黑 */
+.nova-carousel-stage :deep(.swiper-slide) {
+  transition:
+    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.6s cubic-bezier(0.22, 1, 0.36, 1) !important;
+  opacity: 0.6 !important;
+  filter: blur(2px) brightness(0.85) saturate(90%) !important;
+  pointer-events: none !important;
+}
+
+.nova-carousel-stage :deep(.swiper-slide-active) {
+  opacity: 1 !important;
+  filter: blur(0px) brightness(1.05) saturate(110%) !important;
+  z-index: 20 !important;
+  pointer-events: auto !important;
+}
+
+.nova-carousel-stage :deep(.qq-card) {
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
+  height: 100%;
+  transition: box-shadow 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nova-carousel-stage :deep(.swiper-slide-active .qq-card) {
   box-shadow:
-    0 12px 28px -6px rgba(15, 23, 42, 0.05),
-    0 0 0 1px rgba(255, 255, 255, 0.5) inset !important;
-  padding: 24px !important; /* 為這些組件重新提供內邊距 */
-  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease !important;
+    0 24px 56px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.9) inset,
+    0 0 40px rgba(255, 255, 255, 0.2);
 }
 
-/* ==========================================================
-   重新賦予內部元素 Bento Box 質感 (暗色霓虹模式)
-   ========================================================== */
-:global(html.dark) .home-view .dp-metrics,
-:global(html.dark) .home-view .dp-hero,
-:global(html.dark) .home-view .dp-api,
-:global(html.dark) .home-view .dp-status,
-:global(html.dark) .home-view .dp-cl,
-:global(html.dark) .home-view .dp-fp {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
-  backdrop-filter: blur(24px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-top-color: rgba(255, 255, 255, 0.2) !important;
-  border-radius: 24px !important;
+:global(html.dark) .nova-carousel-stage :deep(.swiper-slide-active .qq-card) {
   box-shadow:
-    0 16px 32px -8px rgba(0, 0, 0, 0.8),
-    0 0 20px rgba(59, 130, 246, 0.08),
-    0 1px 1px rgba(255, 255, 255, 0.15) inset !important;
-  padding: 24px !important;
-  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease !important;
+    0 32px 64px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+    0 0 40px rgba(255, 255, 255, 0.05);
 }
 
-/* 統一懸停浮起 */
-:global(.home-view .dp-metrics:hover),
-:global(.home-view .dp-hero:hover),
-:global(.home-view .dp-api:hover),
-:global(.home-view .dp-status:hover),
-:global(.home-view .dp-cl:hover),
-:global(.home-view .dp-fp:hover) {
-  transform: translateY(-4px) scale(1.01) !important;
+.nova-carousel-stage :deep(.qq-card__cover),
+.nova-carousel-stage :deep(.qq-card__image-box img) {
+  border-radius: 20px;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
-/* 暗色模式懸停發光 */
-:global(html.dark) .home-view .dp-metrics:hover,
-:global(html.dark) .home-view .dp-hero:hover,
-:global(html.dark) .home-view .dp-api:hover,
-:global(html.dark) .home-view .dp-status:hover,
-:global(html.dark) .home-view .dp-cl:hover,
-:global(html.dark) .home-view .dp-fp:hover {
-  border-color: rgba(96, 165, 250, 0.5) !important;
-  box-shadow:
-    0 24px 48px -12px rgba(0, 0, 0, 0.9),
-    0 0 36px rgba(59, 130, 246, 0.25),
-    0 1px 1px rgba(255, 255, 255, 0.3) inset !important;
+/* 核心 3：重新计算箭头位置，确保它们悬浮在主图两侧 */
+.nova-carousel-stage :deep(.home-card-swiper-nav) {
+  display: flex !important;
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 100 !important;
+  width: 56px !important;
+  height: 56px !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 1) !important;
+  color: #0f172a !important;
+  border-radius: 50% !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+  cursor: pointer !important;
+  margin: 0 !important;
+  transition: all 0.3s ease !important;
+}
+
+.nova-carousel-stage :deep(.home-card-swiper-nav__ico) { width: 24px !important; height: 24px !important; }
+
+.nova-carousel-stage :deep(.home-card-swiper-nav:hover) {
+  background: #ffffff !important;
+  color: #3b82f6 !important;
+  box-shadow: 0 16px 40px rgba(59, 130, 246, 0.25) !important;
+  transform: translateY(-50%) scale(1.1) !important;
+}
+
+.nova-carousel-stage :deep(.home-card-swiper-nav--prev) { left: calc(50% - 560px) !important; }
+.nova-carousel-stage :deep(.home-card-swiper-nav--next) { right: calc(50% - 560px) !important; }
+
+@media (max-width: 1200px) {
+  .nova-carousel-stage :deep(.home-card-swiper-nav--prev) { left: 16px !important; }
+  .nova-carousel-stage :deep(.home-card-swiper-nav--next) { right: 16px !important; }
+}
+
+/* --- 元流矩陣：與上方展映艙區隔 --- */
+.nova-matrix-section {
+  padding-top: 8px;
+  margin-top: 0;
+  border-top: 1px solid rgb(148 163 184 / 0.35);
+}
+
+:global(html.dark) .nova-matrix-section {
+  border-top-color: rgb(255 255 255 / 0.08);
+}
+
+.nova-tag {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: #fff;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  letter-spacing: 1px;
+  vertical-align: middle;
+}
+.nova-desc {
+  font-size: 15px;
+  color: #64748b;
+  font-weight: 600;
+  margin: 8px 0 0 0;
+}
+
+.nova-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 180px);
+  gap: 24px;
+}
+@media (max-width: 900px) {
+  .nova-bento-grid {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.nova-bento-card {
+  position: relative;
+  border-radius: 32px;
+  padding: 2px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.03);
+}
+.nova-bento-card:hover {
+  transform: translateY(-6px);
+}
+
+.theme-purple {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(255, 255, 255, 0.95));
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
+}
+.theme-purple:hover {
+  box-shadow: 0 20px 48px rgba(168, 85, 247, 0.15);
+}
+.theme-purple .nova-icon-hub {
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+}
+
+.theme-blue {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.35), rgba(255, 255, 255, 0.95));
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+}
+.theme-blue:hover {
+  box-shadow: 0 20px 48px rgba(59, 130, 246, 0.15);
+}
+.theme-blue .nova-icon-hub {
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+}
+
+.theme-cyan {
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.35), rgba(255, 255, 255, 0.95));
+  grid-column: 3 / 4;
+  grid-row: 1 / 2;
+}
+.theme-cyan:hover {
+  box-shadow: 0 20px 48px rgba(45, 212, 191, 0.15);
+}
+.theme-cyan .nova-icon-hub {
+  background: linear-gradient(135deg, #2dd4bf, #0ea5e9);
+}
+
+.theme-orange {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(255, 255, 255, 0.95));
+  grid-column: 2 / 4;
+  grid-row: 2 / 3;
+}
+.theme-orange:hover {
+  box-shadow: 0 20px 48px rgba(245, 158, 11, 0.15);
+}
+.theme-orange .nova-icon-hub {
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
+}
+
+:global(html.dark) .theme-purple,
+:global(html.dark) .theme-blue,
+:global(html.dark) .theme-cyan,
+:global(html.dark) .theme-orange {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.55));
+}
+
+.nova-card-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border-radius: 30px;
+  height: 100%;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 1);
+}
+.theme-purple .nova-card-glass {
+  padding: 48px 40px;
+}
+:global(html.dark) .nova-card-glass {
+  background: rgba(15, 23, 42, 0.65);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.nova-icon-hub {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: #fff;
+  margin-bottom: auto;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+.nova-text-hub h3 {
+  font-size: 22px;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0 0 8px;
+}
+.theme-purple .nova-text-hub h3 {
+  font-size: 32px;
+  margin-top: 24px;
+}
+:global(html.dark) .nova-text-hub h3 {
+  color: #f8fafc;
+}
+.nova-text-hub p {
+  font-size: 14px;
+  color: #475569;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.nova-arrow {
+  align-self: flex-start;
+  font-size: 28px;
+  font-weight: 900;
+  color: #a855f7;
+  margin-top: 32px;
+  transition: transform 0.3s ease;
+}
+.theme-purple:hover .nova-arrow {
+  transform: translateX(8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nova-bento-card:hover,
+  .theme-purple:hover .nova-arrow {
+    transform: none !important;
+  }
+}
+
+@media (max-height: 720px) {
+  .nova-hero-fullbleed {
+    padding-bottom: 6px;
+  }
 }
 </style>

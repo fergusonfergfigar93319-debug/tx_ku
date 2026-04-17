@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" aria-hidden="true">
+  <defs>
+    <linearGradient id="jgNeon" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6ee7b7"/>
+      <stop offset="40%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#064e3b"/>
+    </linearGradient>
+    <linearGradient id="jgEdge" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#d1fae5" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#059669" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="jgMist" cx="65%" cy="85%" r="55%">
+      <stop offset="0%" stop-color="#34d399" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#022c22" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="260" cy="310" rx="130" ry="82" fill="url(#jgMist)"/>
+  <!-- ????? -->
+  <path d="M72 300 L196 96 L216 112 L100 316 Z" fill="url(#jgNeon)" opacity="0.88"/>
+  <path d="M328 300 L204 96 L184 112 L300 316 Z" fill="url(#jgNeon)" opacity="0.72"/>
+  <path d="M200 76 L214 92 L208 268 L192 268 Z" fill="url(#jgEdge)"/>
+  <!-- ?????? -->
+  <path fill="url(#jgNeon)" d="M200 48c-10 0-18 6-22 16l-8 12-14-6-10 18 14 14 8-4c-8 10-12 22-12 36v8c-28 8-48 34-48 64l-4 72 34 8 10-56h92l10 56 34-8-4-72c0-30-20-56-48-64v-8c0-14-4-26-12-36l8 4 14-14-10-18-14 6-8-12c-4-10-12-16-22-16z"/>
+  <path d="M40 220 Q200 180 360 220" fill="none" stroke="url(#jgEdge)" stroke-width="6" stroke-linecap="round" opacity="0.65"/>
+</svg>

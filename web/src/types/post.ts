@@ -12,6 +12,8 @@ export interface Post {
   mediaAttachments?: string[]
   likeCount?: number
   commentCount?: number
+  /** 瀏覽量（後端可選返回） */
+  viewCount?: number
   createdAt?: string
   /** 广场置顶（展示在列表前部） */
   pinned?: boolean

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" aria-hidden="true">
+  <defs>
+    <linearGradient id="esGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="40%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </linearGradient>
+    <linearGradient id="esBeam" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#fffbeb" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="esStage" cx="50%" cy="78%" r="62%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.42"/>
+      <stop offset="100%" stop-color="#451a03" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="200" cy="300" rx="168" ry="88" fill="url(#esStage)"/>
+  <path d="M128 36 L200 112 L272 36" fill="none" stroke="url(#esBeam)" stroke-width="18" stroke-linecap="round" opacity="0.55"/>
+  <path fill="url(#esGold)" d="M200 88c-46 0-84 38-84 84v14h-22v58c0 34 28 62 62 62h8c6 26 28 46 54 46s48-20 54-46h8c34 0 62-28 62-62v-58h-22v-14c0-46-38-84-84-84zm0 32h58c30 0 54 24 54 54v10H146v-10c0-30 24-54 54-54zm-70 166h224v22c0 16-14 30-30 30H160c-16 0-30-14-30-30v-22z"/>
+  <path fill="url(#esGold)" opacity="0.62" d="M140 312h120v52c0 16-14 30-30 30h-60c-16 0-30-14-30-30v-52z"/>
+  <circle cx="200" cy="196" r="102" fill="none" stroke="#fbbf24" stroke-opacity="0.28" stroke-width="3"/>
+  <circle cx="200" cy="196" r="74" fill="none" stroke="#fcd34d" stroke-opacity="0.4" stroke-width="2"/>
+  <path d="M48 248h32l14-24 22 48 18-36 22 32h176" fill="none" stroke="url(#esGold)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+</svg>

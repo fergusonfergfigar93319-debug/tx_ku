@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" aria-hidden="true">
+  <!-- ????????? -->
+  <ellipse cx="200" cy="80" rx="44" ry="48" fill="#ffffff" fill-opacity="0.92"/>
+  <path fill="#ffffff" fill-opacity="0.9" d="M200 128c-40 0-72 32-80 72l-24 140 40 12 32-108 32 108 40-12-24-140c-8-40-40-72-80-72z"/>
+  <path fill="#ffffff" fill-opacity="0.45" d="M56 200c48 32 88 88 104 160l36-8C176 260 120 200 56 200zm288 0c-64 0-120 60-140 152l36 8c16-72 56-128 104-160z"/>
+</svg>

@@ -26,14 +26,17 @@ const props = withDefaults(
     fullBleed?: boolean
     /** 压低高度与主卡放大倍数，避免遮挡下方主内容 */
     compact?: boolean
+    /** 嵌入首页外层布局：隐藏内置标题/焦点条，并取消深色舞台底，避免与外层「主题精选」重复 */
+    embedInParent?: boolean
     autoplayDelay?: number
     transitionMs?: number
   }>(),
   {
     fullBleed: false,
     compact: false,
+    embedInParent: false,
     autoplayDelay: 6000,
-    transitionMs: 600,
+    transitionMs: 720,
   },
 )
 
@@ -44,27 +47,28 @@ const modules = [EffectCreative, Autoplay, Pagination, Parallax]
  * limitProgress 需传给 Swiper creative 模块（类型上可能未声明，运行时有效）
  */
 const creativeEffectOpts = computed(() => {
-  const z = props.compact ? 200 : 300
-  const x = props.compact ? '70%' : '80%'
+  /* 微收斂 X/Z：減少側卡「穿出」舞台感，切換更俐落 */
+  const z = props.compact ? 132 : 220
+  const x = props.compact ? '46%' : '56%'
   return {
     limitProgress: 2,
     prev: {
       shadow: true,
-      translate: [`-${x}`, '4%', -z],
-      rotate: [0, 0, props.compact ? -6 : -10],
-      opacity: 0.85,
+      translate: [`-${x}`, '2.5%', -z],
+      rotate: [0, 0, props.compact ? -4.5 : -7],
+      opacity: 0.58,
     },
     next: {
       shadow: true,
-      translate: [x, '4%', -z],
-      rotate: [0, 0, props.compact ? 6 : 10],
-      opacity: 0.85,
+      translate: [x, '2.5%', -z],
+      rotate: [0, 0, props.compact ? 4.5 : 7],
+      opacity: 0.58,
     },
   } as Record<string, unknown>
 })
 
-/** 略放大 slidesPerView，与收紧后的 translate 配合，侧露边更完整 */
-const slidesPerViewCreative = computed(() => (props.compact ? 1.3 : 1.5))
+/** 略放大 slidesPerView：可視區多露一點鄰卡，循環時不顯空 */
+const slidesPerViewCreative = computed(() => (props.compact ? 1.4 : 1.52))
 
 /** 系统偏好减少动效时关闭视差，避免眩晕 */
 const motionOk = ref(true)
@@ -79,13 +83,15 @@ const swiperRef = ref<SwiperClass | null>(null)
 const enableLoop = computed(() => props.items.length >= 3)
 
 /**
- * slidesPerView:auto + centered 时，loop 需足够多附加克隆，否则滑到末张时右侧无衔接（空白）。
- * 取 max(n,8) 封顶 16，避免 DOM 过多。
+ * centered + EffectCreative + 小数 slidesPerView：loop 需較多預儲克隆，
+ * 否則滑到某些 realIndex 時右側沒有下一張可渲染，出現空白。
  */
 const loopAdditionalSlidesCount = computed(() => {
   const n = props.items.length
   if (n < 3) return 0
-  return Math.min(Math.max(n, 8), 16)
+  const spv = props.compact ? 1.4 : 1.52
+  const byView = Math.ceil(spv) + 3
+  return Math.min(Math.max(n * 2, byView + 8, 20), 36)
 })
 
 const router = useRouter()
@@ -227,17 +233,18 @@ function badgeClass(item: HomeCardSwiperItem) {
     :class="{
       'home-card-swiper-wrap--fullbleed': fullBleed,
       'home-card-swiper-wrap--compact': compact,
+      'home-card-swiper-wrap--embed': embedInParent,
     }"
     :style="{ '--qq-swiper-dur': `${transitionMs}ms` }"
     aria-label="推荐卡片轮播"
   >
-    <header v-if="compact" class="home-card-swiper-head home-card-swiper-head--visual">
+    <header v-if="compact && !embedInParent" class="home-card-swiper-head home-card-swiper-head--visual">
       <h2 class="home-card-swiper-title home-card-swiper-title--visual">主题精选</h2>
       <span class="home-card-swiper-meta" aria-hidden="true"
         >{{ autoplaySec }}s · 滑动 / 箭头</span
       >
     </header>
-    <header v-else class="home-card-swiper-head">
+    <header v-else-if="!compact && !embedInParent" class="home-card-swiper-head">
       <p class="home-card-swiper-eyebrow">王者电竞 IP × 城市文旅 × 潮流 × 场景化 AI</p>
       <h2 class="home-card-swiper-title">主题精选 · 沉浸入口</h2>
       <p class="home-card-swiper-lead home-card-swiper-lead--short">
@@ -282,19 +289,23 @@ function badgeClass(item: HomeCardSwiperItem) {
       </button>
 
     <Swiper
+      :key="itemsIdKey"
       class="home-card-swiper"
       :modules="modules"
       effect="creative"
       :creative-effect="creativeEffectOpts"
       :parallax="motionOk"
       :slides-per-view="slidesPerViewCreative"
+      :slides-per-group="1"
       :centered-slides="true"
       :space-between="0"
       :grab-cursor="true"
       :observer="true"
       :observe-parents="true"
       :resize-observer="true"
+      :watch-slides-progress="true"
       :loop="enableLoop"
+      :loop-add-blank-slides="true"
       :loop-additional-slides="enableLoop ? loopAdditionalSlidesCount : 0"
       :rewind="!enableLoop && items.length > 1"
       :speed="transitionMs"
@@ -365,7 +376,7 @@ function badgeClass(item: HomeCardSwiperItem) {
     </Swiper>
 
       <div
-        v-if="activeItem"
+        v-if="activeItem && !embedInParent"
         class="home-card-swiper-spotlight"
         :class="{ 'home-card-swiper-spotlight--inline': compact }"
         aria-live="polite"
@@ -399,7 +410,7 @@ function badgeClass(item: HomeCardSwiperItem) {
   --qq-bg-2: #f1f5f9;
   --qq-shine-duration: 14s;
   --qq-shine-ease: cubic-bezier(0.42, 0.02, 0.58, 0.98);
-  --qq-ease-carousel: cubic-bezier(0.22, 0.82, 0.28, 1);
+  --qq-ease-carousel: cubic-bezier(0.16, 1, 0.3, 1);
 
   --buddy-primary-gradient: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%);
   --buddy-accent-gradient: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c084fc 100%);
@@ -422,6 +433,24 @@ function badgeClass(item: HomeCardSwiperItem) {
   border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
   transition: background-image 0.8s ease-in-out;
+}
+
+/* 嵌入首页外层：取消深色舞台与装饰层，由父级 nova 区承载氛围 */
+.home-card-swiper-wrap--embed {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  overflow: visible;
+  --qq-bg-0: transparent;
+  --qq-bg-1: transparent;
+  --qq-bg-2: transparent;
+}
+.home-card-swiper-wrap--embed::before {
+  display: none !important;
 }
 
 /* 流光 + 极细网格：多层合并于同一 background，避免互相覆盖 */
@@ -909,13 +938,17 @@ function badgeClass(item: HomeCardSwiperItem) {
   min-height: clamp(196px, 34vw, 360px);
   transform-style: preserve-3d;
   transition:
-    transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
-    opacity var(--qq-swiper-dur, 680ms) var(--qq-ease-carousel);
+    transform var(--qq-swiper-dur, 720ms) var(--qq-ease-carousel),
+    opacity var(--qq-swiper-dur, 720ms) var(--qq-ease-carousel);
 }
 
 .home-card-swiper :deep(.swiper-slide-active .qq-card) {
-  transform: scale(1.05);
-  filter: saturate(1.08) brightness(1.04);
+  transform: scale(1.04);
+  filter: saturate(1.06) brightness(1.03);
+  transition:
+    transform var(--qq-swiper-dur, 720ms) var(--qq-ease-carousel),
+    filter var(--qq-swiper-dur, 720ms) var(--qq-ease-carousel),
+    box-shadow var(--qq-swiper-dur, 720ms) var(--qq-ease-carousel);
 }
 
 /* 分页：相对整块轮播水平居中（覆盖 Swiper 默认 absolute 偏一侧） */
@@ -1298,6 +1331,16 @@ function badgeClass(item: HomeCardSwiperItem) {
   overflow: visible !important;
 }
 
+/* 首頁嵌入 nova：收緊上下留白，箭頭更易對齊卡片幾何中心 */
+.home-card-swiper-wrap--embed.home-card-swiper-wrap--compact .home-card-swiper.swiper {
+  padding: 2px 0 18px !important;
+}
+
+.home-card-swiper-wrap--embed.home-card-swiper-wrap--compact .home-card-swiper-stage {
+  min-height: clamp(148px, min(22vw, 30vh), 272px);
+  max-height: min(36vh, 300px);
+}
+
 .home-card-swiper :deep(.qq-card) {
   background: linear-gradient(
     135deg,
@@ -1325,7 +1368,11 @@ function badgeClass(item: HomeCardSwiperItem) {
 }
 
 .home-card-swiper :deep(.swiper-slide:not(.swiper-slide-active) .qq-card) {
-  filter: brightness(0.7) contrast(1.1);
+  filter: brightness(0.66) saturate(0.86) contrast(1.03) blur(0.75px);
+  transition:
+    filter var(--qq-swiper-dur, 720ms) var(--qq-ease-carousel),
+    transform var(--qq-swiper-dur, 720ms) var(--qq-ease-carousel),
+    box-shadow var(--qq-swiper-dur, 720ms) var(--qq-ease-carousel);
 }
 
 .home-card-swiper :deep(.qq-card::before) {

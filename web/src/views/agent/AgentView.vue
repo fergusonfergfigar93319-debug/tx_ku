@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   ArrowDown,
-  Brush,
   Cpu,
   MagicStick,
   Present,
@@ -12,7 +11,10 @@ import {
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import * as aiApi from '@/api/ai'
+import AgentAvatarSelector from '@/components/agent/AgentAvatarSelector.vue'
+import AgentScenarioSelector from '@/components/agent/AgentScenarioSelector.vue'
 import AgentChibiAvatar from '@/components/agent/AgentChibiAvatar.vue'
+import AgentPresetCard from '@/components/agent/AgentPresetCard.vue'
 import {
   FACTORY_AGENT_AVATAR,
   FACTORY_AGENT_NAME,
@@ -20,7 +22,13 @@ import {
   findAgentPreset,
   type AgentOfficialPreset,
 } from '@/data/agentPresets'
-import { Q_ACCENT_SWATCHES, Q_HAIR_SWATCHES, Q_LABELS, Q_OUTFIT_SWATCHES } from '@/data/agentQDesignUi'
+import {
+  Q_ACCENT_SWATCHES,
+  Q_HAIR_SWATCHES,
+  Q_LABELS,
+  Q_OUTFIT_SWATCHES,
+  Q_SKIN_SWATCHES,
+} from '@/data/agentQDesignUi'
 import { AVATAR_STYLE_OPTIONS, FOCUS_SCENARIO_OPTIONS } from '@/data/agentTuningOptions'
 import {
   DEFAULT_AGENT_Q_DESIGN,
@@ -301,6 +309,61 @@ const LANE_VALUES: LaneArchetype[] = [
   'assassin',
 ]
 
+/** 分路卡片圖示（僅展示；提交值仍為 `laneArchetype` 枚舉） */
+const LANE_ARCHETYPE_ICONS: Record<LaneArchetype, string> = {
+  tank: '🛡️',
+  fighter: '⚔️',
+  mage: '🔮',
+  marksman: '🏹',
+  assassin: '🗡️',
+  support: '✨',
+}
+
+/** 捏臉籌碼：圖示僅展示，提交值仍為 qForm 枚舉 */
+const Q_DESIGN_EYE_CHIPS = [
+  { idx: 0 as const, icon: '🫧' },
+  { idx: 1 as const, icon: '✨' },
+  { idx: 2 as const, icon: '😑' },
+]
+const Q_DESIGN_MOUTH_CHIPS = [
+  { idx: 0 as const, icon: '🙂' },
+  { idx: 1 as const, icon: '😆' },
+  { idx: 2 as const, icon: '😳' },
+]
+const Q_DESIGN_BLUSH_CHIPS = [
+  { idx: 0 as const, icon: '○' },
+  { idx: 1 as const, icon: '🌸' },
+  { idx: 2 as const, icon: '💖' },
+]
+const Q_DESIGN_HAIR_CHIPS = [
+  { idx: 0 as const, icon: '✂️' },
+  { idx: 1 as const, icon: '〰️' },
+  { idx: 2 as const, icon: '💫' },
+  { idx: 3 as const, icon: '💧' },
+]
+const Q_DESIGN_ACCESSORY_CHIPS = [
+  { idx: 0 as const, icon: '🦄' },
+  { idx: 1 as const, icon: '👑' },
+  { idx: 2 as const, icon: '🎧' },
+  { idx: 3 as const, icon: '·' },
+]
+/** 氛圍主題卡 ↔ `framePreset` 0–3（與 `Q_LABELS.frame` 順序對齊） */
+const VIBE_FRAME_OPTIONS = [
+  { val: 'nature', frame: 0 as const, icon: '🍃', text: '清新森系' },
+  { val: 'void', frame: 1 as const, icon: '🌌', text: '深渊虚空' },
+  { val: 'flame', frame: 2 as const, icon: '🔥', text: '热血赤焰' },
+  { val: 'cyber', frame: 3 as const, icon: '🌃', text: '赛博霓虹' },
+] as const
+
+const previewVibeKey = computed(() => {
+  const row = VIBE_FRAME_OPTIONS.find((o) => o.frame === qForm.framePreset)
+  return (row?.val ?? 'nature') as 'nature' | 'void' | 'flame' | 'cyber'
+})
+
+const activeVibeLabel = computed(
+  () => VIBE_FRAME_OPTIONS.find((o) => o.frame === qForm.framePreset)?.text ?? '默认配置',
+)
+
 function randomizeQDesign() {
   qForm.laneArchetype = LANE_VALUES[Math.floor(Math.random() * LANE_VALUES.length)]!
   qForm.skinTone = Math.floor(Math.random() * 4) as AgentBuddyQDesign['skinTone']
@@ -328,6 +391,11 @@ async function refreshCard() {
   } finally {
     loading.value = false
   }
+}
+
+function setSkinToneIdx(i: number) {
+  if (i < 0 || i > 3) return
+  qForm.skinTone = i as AgentBuddyQDesign['skinTone']
 }
 </script>
 
@@ -432,213 +500,304 @@ async function refreshCard() {
       </div>
     </section>
 
-    <section class="chibi-workshop buddy-card-surface" aria-labelledby="chibi-heading">
-      <div class="chibi-workshop__head">
-        <span class="chibi-workshop__ico" aria-hidden="true">
-          <el-icon :size="22"><Brush /></el-icon>
-        </span>
-        <div>
-          <h2 id="chibi-heading" class="chibi-workshop__title">峡谷 Q 版形象工坊</h2>
-          <p class="chibi-workshop__desc">
-            分路气质、神态与配色可自由组合（原创抽象造型）。善用「随机灵感」探索搭配，再用色板与取色器精修；保存后聊天顶栏与气泡旁同步展示。
-          </p>
+    <section class="chibi-workshop chibi-workshop--glass2 buddy-card-surface" aria-labelledby="chibi-heading">
+      <div class="chibi-workshop__header">
+        <h2 id="chibi-heading" class="chibi-workshop__title chibi-workshop__title--hero">峡谷 Q 版形象工坊</h2>
+        <p class="chibi-workshop__subtitle">定制你的专属电竞化身，与峡谷广场同频</p>
+      </div>
+
+      <div class="chibi-mode-toggle chibi-mode-toggle--segment">
+        <div class="toggle-track">
+          <div class="toggle-glider" :class="avatarMode" aria-hidden="true" />
+          <button
+            type="button"
+            class="toggle-btn"
+            :class="{ 'is-active': avatarMode === 'preset' }"
+            :disabled="loading"
+            @click="onAvatarModeChange('preset')"
+          >
+            官方成品套组
+          </button>
+          <button
+            type="button"
+            class="toggle-btn"
+            :class="{ 'is-active': avatarMode === 'custom' }"
+            :disabled="loading"
+            @click="onAvatarModeChange('custom')"
+          >
+            我的 Q 版创作
+          </button>
         </div>
       </div>
 
-      <el-radio-group
-        class="chibi-mode-toggle"
-        :model-value="avatarMode"
-        size="default"
-        @change="(v: string | number | boolean | undefined) => onAvatarModeChange(String(v) as 'preset' | 'custom')"
-      >
-        <el-radio-button value="preset">官方成品套组</el-radio-button>
-        <el-radio-button value="custom">我的 Q 版创作</el-radio-button>
-      </el-radio-group>
+      <div v-show="avatarMode === 'custom'" class="chibi-workshop__grid chibi-workshop__grid--workspace">
+        <div class="chibi-workspace-layout">
+          <div class="chibi-preview-showcase" :data-vibe="previewVibeKey">
+            <div class="showcase-backdrop" aria-hidden="true" />
+            <div class="theme-badge">{{ activeVibeLabel }}</div>
 
-      <div v-show="avatarMode === 'custom'" class="chibi-workshop__grid">
-        <div class="chibi-workshop__preview-card">
-          <p class="chibi-workshop__preview-label">实时预览</p>
-          <div class="chibi-workshop__preview-ring" aria-hidden="true">
-            <AgentChibiAvatar :design="qForm" :size="180" />
+            <div class="avatar-hologram">
+              <div class="hologram-scanline" aria-hidden="true" />
+              <div class="hologram-aura" aria-hidden="true" />
+              <div class="showcase-avatar-ring">
+                <AgentChibiAvatar :design="qForm" :size="180" />
+              </div>
+            </div>
+
+            <div class="showcase-meta">
+              <p class="showcase-lane-hint">
+                当前气质：
+                <strong>{{ LANE_ARCHETYPE_OPTIONS.find((x) => x.value === qForm.laneArchetype)?.label }}</strong>
+              </p>
+              <p class="showcase-tip">
+                衣装与点缀色对比度越高，轮廓越清晰；腮红「元气」适合暖色发系。
+              </p>
+            </div>
+
+            <div class="showcase-pedestal" aria-hidden="true" />
           </div>
-          <p class="chibi-workshop__lane-hint">
-            当前气质：
-            <strong>{{ LANE_ARCHETYPE_OPTIONS.find((x) => x.value === qForm.laneArchetype)?.label }}</strong>
-          </p>
-          <p class="chibi-workshop__tip">
-            衣装与点缀色对比度越高，轮廓越清晰；腮红「元气」适合暖色发系。
-          </p>
-        </div>
 
-        <div class="chibi-workshop__fields">
-          <div class="chibi-panel">
-            <h3 class="chibi-panel__title">分路气质</h3>
-            <div class="chibi-lane-grid" role="group" aria-label="选择分路气质">
+          <div class="chibi-controls-scroll">
+            <div class="chibi-workshop__fields">
+          <div class="chibi-panel chibi-panel--lane">
+            <div class="chibi-panel__header">
+              <h3 class="chibi-lane-panel__title">分路气质</h3>
+              <span class="chibi-lane-panel__hint">决定化身的基础动作与气场</span>
+            </div>
+            <div class="chibi-lane-grid chibi-lane-grid--cards" role="group" aria-label="选择分路气质">
               <button
                 v-for="o in LANE_ARCHETYPE_OPTIONS"
                 :key="o.value"
                 type="button"
-                class="chibi-lane-pill"
-                :class="{ 'is-on': qForm.laneArchetype === o.value }"
+                class="chibi-lane-btn"
+                :class="{ 'is-selected': qForm.laneArchetype === o.value }"
                 :aria-pressed="qForm.laneArchetype === o.value"
                 @click="qForm.laneArchetype = o.value"
               >
-                <span class="chibi-lane-pill__short">{{ o.short }}</span>
-                <span class="chibi-lane-pill__full">{{ o.label }}</span>
+                <div class="btn-glow" aria-hidden="true" />
+                <div class="btn-content">
+                  <span class="btn-icon">{{ LANE_ARCHETYPE_ICONS[o.value] }}</span>
+                  <span class="btn-label">{{ o.short }}</span>
+                  <span class="btn-sublabel">{{ o.label }}</span>
+                </div>
               </button>
             </div>
           </div>
 
-          <div class="chibi-panel">
-            <h3 class="chibi-panel__title">神态与肤色</h3>
-            <div class="chibi-field">
-              <span class="chibi-field__label">肤色</span>
-              <el-slider v-model="qForm.skinTone" :min="0" :max="3" :step="1" show-stops />
-              <span class="chibi-field__meta">{{ Q_LABELS.skin[qForm.skinTone] }}</span>
+          <div class="chibi-panel chibi-panel--doll">
+            <div class="chibi-doll-panel__header">
+              <h3 class="chibi-doll-panel__title">神态与肤色</h3>
+              <span class="chibi-doll-panel__hint">赋予形象独特的情绪与生机</span>
             </div>
-            <div class="chibi-field chibi-field--row">
-              <div>
-                <span class="chibi-field__label">嘴型</span>
-                <el-select v-model="qForm.mouthStyle" style="width: 100%">
-                  <el-option
-                    v-for="(lb, i) in Q_LABELS.mouth"
-                    :key="'m-' + i"
-                    :label="lb"
-                    :value="i as 0 | 1 | 2"
+            <div class="chibi-feature-container">
+              <div class="feature-group">
+                <span class="feature-label">基础肤色</span>
+                <div class="color-swatches" role="group" aria-label="肤色">
+                  <button
+                    v-for="(hex, i) in Q_SKIN_SWATCHES"
+                    :key="'skin-' + i"
+                    type="button"
+                    class="swatch-btn"
+                    :class="{ 'is-active': qForm.skinTone === i }"
+                    :style="{ '--swatch-color': hex }"
+                    :title="Q_LABELS.skin[i]"
+                    :aria-pressed="qForm.skinTone === i"
+                    @click="setSkinToneIdx(i)"
                   />
-                </el-select>
+                </div>
               </div>
-              <div>
-                <span class="chibi-field__label">腮红</span>
-                <el-select v-model="qForm.blushLevel" style="width: 100%">
-                  <el-option
-                    v-for="(lb, i) in Q_LABELS.blush"
-                    :key="'b-' + i"
-                    :label="lb"
-                    :value="i as 0 | 1 | 2"
-                  />
-                </el-select>
+              <div class="feature-group">
+                <span class="feature-label">眼神</span>
+                <div class="chip-list" role="group" aria-label="眼神">
+                  <button
+                    v-for="c in Q_DESIGN_EYE_CHIPS"
+                    :key="'eye-' + c.idx"
+                    type="button"
+                    class="feature-chip"
+                    :class="{ 'is-active': qForm.eyeStyle === c.idx }"
+                    :aria-pressed="qForm.eyeStyle === c.idx"
+                    @click="qForm.eyeStyle = c.idx"
+                  >
+                    <span class="chip-icon">{{ c.icon }}</span>
+                    <span class="chip-text">{{ Q_LABELS.eyes[c.idx] }}</span>
+                  </button>
+                </div>
               </div>
-            </div>
-            <div class="chibi-field">
-              <span class="chibi-field__label">眼神</span>
-              <el-select v-model="qForm.eyeStyle" style="width: 100%">
-                <el-option
-                  v-for="(lb, i) in Q_LABELS.eyes"
-                  :key="i"
-                  :label="lb"
-                  :value="i as 0 | 1 | 2"
-                />
-              </el-select>
-            </div>
-          </div>
-
-          <div class="chibi-panel">
-            <h3 class="chibi-panel__title">发型与头饰</h3>
-            <div class="chibi-field chibi-field--row">
-              <div>
-                <span class="chibi-field__label">发型</span>
-                <el-select v-model="qForm.hairStyle" style="width: 100%">
-                  <el-option
-                    v-for="(lb, i) in Q_LABELS.hair"
-                    :key="i"
-                    :label="lb"
-                    :value="i as 0 | 1 | 2 | 3"
-                  />
-                </el-select>
-              </div>
-              <div>
-                <span class="chibi-field__label">头饰</span>
-                <el-select v-model="qForm.accessory" style="width: 100%">
-                  <el-option
-                    v-for="(lb, i) in Q_LABELS.accessory"
-                    :key="i"
-                    :label="lb"
-                    :value="i as 0 | 1 | 2 | 3"
-                  />
-                </el-select>
-              </div>
-            </div>
-            <div class="chibi-field">
-              <div class="chibi-field__label-row">
-                <span class="chibi-field__label">发色</span>
-                <el-color-picker
-                  v-model="qForm.hairColor"
-                  size="small"
-                  :predefine="[...Q_HAIR_SWATCHES]"
-                  show-alpha
-                />
-              </div>
-              <div class="chibi-swatches">
-                <button
-                  v-for="c in Q_HAIR_SWATCHES"
-                  :key="c"
-                  type="button"
-                  class="chibi-swatch"
-                  :class="{ 'is-on': qForm.hairColor === c }"
-                  :style="{ background: c }"
-                  :title="c"
-                  @click="qForm.hairColor = c"
-                />
+              <div class="feature-group feature-group--split">
+                <div class="feature-group__col">
+                  <span class="feature-label">嘴型</span>
+                  <div class="chip-list" role="group" aria-label="嘴型">
+                    <button
+                      v-for="c in Q_DESIGN_MOUTH_CHIPS"
+                      :key="'mouth-' + c.idx"
+                      type="button"
+                      class="feature-chip"
+                      :class="{ 'is-active': qForm.mouthStyle === c.idx }"
+                      :aria-pressed="qForm.mouthStyle === c.idx"
+                      @click="qForm.mouthStyle = c.idx"
+                    >
+                      <span class="chip-icon">{{ c.icon }}</span>
+                      <span class="chip-text">{{ Q_LABELS.mouth[c.idx] }}</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="feature-group__col">
+                  <span class="feature-label">腮红</span>
+                  <div class="chip-list" role="group" aria-label="腮红">
+                    <button
+                      v-for="c in Q_DESIGN_BLUSH_CHIPS"
+                      :key="'blush-' + c.idx"
+                      type="button"
+                      class="feature-chip"
+                      :class="{ 'is-active': qForm.blushLevel === c.idx }"
+                      :aria-pressed="qForm.blushLevel === c.idx"
+                      @click="qForm.blushLevel = c.idx"
+                    >
+                      <span class="chip-icon">{{ c.icon }}</span>
+                      <span class="chip-text">{{ Q_LABELS.blush[c.idx] }}</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="chibi-panel">
-            <h3 class="chibi-panel__title">配色与氛围</h3>
-            <div class="chibi-field">
-              <span class="chibi-field__label">预览背景</span>
-              <el-select v-model="qForm.framePreset" style="width: 100%">
-                <el-option
-                  v-for="(lb, i) in Q_LABELS.frame"
-                  :key="'f-' + i"
-                  :label="lb"
-                  :value="i as 0 | 1 | 2 | 3"
-                />
-              </el-select>
+          <div class="chibi-panel chibi-panel--doll">
+            <div class="chibi-doll-panel__header">
+              <h3 class="chibi-doll-panel__title">发型与头饰</h3>
+              <span class="chibi-doll-panel__hint">打造个性的潮玩造型</span>
             </div>
-            <div class="chibi-field chibi-field--row">
-              <div>
-                <div class="chibi-field__label-row">
-                  <span class="chibi-field__label">衣装主色</span>
+            <div class="chibi-feature-container">
+              <div class="feature-group">
+                <span class="feature-label">发型</span>
+                <div class="chip-list" role="group" aria-label="发型">
+                  <button
+                    v-for="c in Q_DESIGN_HAIR_CHIPS"
+                    :key="'hair-' + c.idx"
+                    type="button"
+                    class="feature-chip"
+                    :class="{ 'is-active': qForm.hairStyle === c.idx }"
+                    :aria-pressed="qForm.hairStyle === c.idx"
+                    @click="qForm.hairStyle = c.idx"
+                  >
+                    <span class="chip-icon">{{ c.icon }}</span>
+                    <span class="chip-text">{{ Q_LABELS.hair[c.idx] }}</span>
+                  </button>
+                </div>
+              </div>
+              <div class="feature-group">
+                <span class="feature-label">头饰</span>
+                <div class="chip-list" role="group" aria-label="头饰">
+                  <button
+                    v-for="c in Q_DESIGN_ACCESSORY_CHIPS"
+                    :key="'acc-' + c.idx"
+                    type="button"
+                    class="feature-chip"
+                    :class="{ 'is-active': qForm.accessory === c.idx }"
+                    :aria-pressed="qForm.accessory === c.idx"
+                    @click="qForm.accessory = c.idx"
+                  >
+                    <span class="chip-icon">{{ c.icon }}</span>
+                    <span class="chip-text">{{ Q_LABELS.accessory[c.idx] }}</span>
+                  </button>
+                </div>
+              </div>
+              <div class="feature-group">
+                <div class="feature-label-row">
+                  <span class="feature-label">发色</span>
                   <el-color-picker
-                    v-model="qForm.outfitHue"
+                    v-model="qForm.hairColor"
                     size="small"
-                    :predefine="[...Q_OUTFIT_SWATCHES]"
+                    :predefine="[...Q_HAIR_SWATCHES]"
                     show-alpha
                   />
                 </div>
-                <div class="chibi-swatches chibi-swatches--sm">
+                <div class="color-swatches color-swatches--hair">
                   <button
-                    v-for="c in Q_OUTFIT_SWATCHES"
-                    :key="'o-' + c"
+                    v-for="c in Q_HAIR_SWATCHES"
+                    :key="'hc-' + c"
                     type="button"
-                    class="chibi-swatch"
-                    :class="{ 'is-on': qForm.outfitHue === c }"
-                    :style="{ background: c }"
-                    @click="qForm.outfitHue = c"
+                    class="swatch-btn"
+                    :class="{ 'is-active': qForm.hairColor === c }"
+                    :style="{ '--swatch-color': c }"
+                    :title="c"
+                    @click="qForm.hairColor = c"
                   />
                 </div>
               </div>
-              <div>
-                <div class="chibi-field__label-row">
-                  <span class="chibi-field__label">点缀色</span>
-                  <el-color-picker
-                    v-model="qForm.accentHue"
-                    size="small"
-                    :predefine="[...Q_ACCENT_SWATCHES]"
-                    show-alpha
-                  />
-                </div>
-                <div class="chibi-swatches chibi-swatches--sm">
+            </div>
+          </div>
+
+          <div class="chibi-panel chibi-panel--doll">
+            <div class="chibi-doll-panel__header">
+              <h3 class="chibi-doll-panel__title">配色与氛围</h3>
+              <span class="chibi-doll-panel__hint">一键注入灵魂主题色，联动左侧展台环境光</span>
+            </div>
+            <div class="chibi-feature-container">
+              <div class="feature-group">
+                <span class="feature-label">氛围主题</span>
+                <div class="vibe-cards-grid" role="group" aria-label="氛围主题">
                   <button
-                    v-for="c in Q_ACCENT_SWATCHES"
-                    :key="'a-' + c"
+                    v-for="v in VIBE_FRAME_OPTIONS"
+                    :key="'vibe-' + v.val"
                     type="button"
-                    class="chibi-swatch"
-                    :class="{ 'is-on': qForm.accentHue === c }"
-                    @click="qForm.accentHue = c"
-                  />
+                    class="vibe-card"
+                    :class="{ 'is-active': qForm.framePreset === v.frame }"
+                    :data-color="v.val"
+                    :aria-pressed="qForm.framePreset === v.frame"
+                    @click="qForm.framePreset = v.frame"
+                  >
+                    <div class="vibe-card__bg" aria-hidden="true" />
+                    <span class="vibe-card__icon">{{ v.icon }}</span>
+                    <span class="vibe-card__text">{{ v.text }}</span>
+                  </button>
+                </div>
+              </div>
+              <div class="feature-group feature-group--colors">
+                <div class="feature-group__col">
+                  <div class="feature-label-row">
+                    <span class="feature-label">衣装主色</span>
+                    <el-color-picker
+                      v-model="qForm.outfitHue"
+                      size="small"
+                      :predefine="[...Q_OUTFIT_SWATCHES]"
+                      show-alpha
+                    />
+                  </div>
+                  <div class="color-swatches color-swatches--dense">
+                    <button
+                      v-for="c in Q_OUTFIT_SWATCHES"
+                      :key="'out-' + c"
+                      type="button"
+                      class="swatch-btn"
+                      :class="{ 'is-active': qForm.outfitHue === c }"
+                      :style="{ '--swatch-color': c }"
+                      :title="c"
+                      @click="qForm.outfitHue = c"
+                    />
+                  </div>
+                </div>
+                <div class="feature-group__col">
+                  <div class="feature-label-row">
+                    <span class="feature-label">点缀色</span>
+                    <el-color-picker
+                      v-model="qForm.accentHue"
+                      size="small"
+                      :predefine="[...Q_ACCENT_SWATCHES]"
+                      show-alpha
+                    />
+                  </div>
+                  <div class="color-swatches color-swatches--dense">
+                    <button
+                      v-for="c in Q_ACCENT_SWATCHES"
+                      :key="'ac-' + c"
+                      type="button"
+                      class="swatch-btn"
+                      :class="{ 'is-active': qForm.accentHue === c }"
+                      :style="{ '--swatch-color': c }"
+                      @click="qForm.accentHue = c"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -653,6 +812,8 @@ async function refreshCard() {
             <el-button type="primary" round :loading="loading" @click="saveQDesign">
               保存 Q 版形象
             </el-button>
+          </div>
+            </div>
           </div>
         </div>
       </div>
@@ -673,28 +834,16 @@ async function refreshCard() {
         </div>
       </div>
 
-      <div class="preset-scroller">
-        <button
+      <div class="agent-presets-carousel">
+        <AgentPresetCard
           v-for="p in OFFICIAL_AGENT_PRESETS"
           :key="p.id"
-          type="button"
-          class="preset-card"
-          :class="{ 'is-selected': user.profile?.agentPresetId === p.id }"
-          :aria-pressed="user.profile?.agentPresetId === p.id"
-          :style="{ background: p.gradient }"
+          :preset="p"
+          :selected="user.profile?.agentPresetId === p.id"
           :disabled="loading"
-          @click="selectPreset(p)"
-        >
-          <div v-if="selectingId === p.id" class="preset-card__loading" aria-hidden="true" />
-          <div class="preset-card__avatar">
-            <img :src="p.avatarUrl" alt="" width="64" height="64" />
-          </div>
-          <span class="preset-card__role" aria-hidden="true">
-            <el-icon :size="18"><component :is="p.roleIcon" /></el-icon>
-          </span>
-          <span class="preset-card__name">{{ p.name }}</span>
-          <span class="preset-card__line">{{ p.tagline }} · {{ p.detail }}</span>
-        </button>
+          :loading="selectingId === p.id"
+          @select="selectPreset(p)"
+        />
       </div>
     </section>
 
@@ -714,9 +863,7 @@ async function refreshCard() {
                   </el-tooltip>
                 </span>
               </template>
-              <el-select v-model="form.focusScenario" style="width: 100%">
-                <el-option v-for="s in FOCUS_SCENARIO_OPTIONS" :key="s" :label="s" :value="s" />
-              </el-select>
+              <AgentScenarioSelector v-model="form.focusScenario" :disabled="loading" />
             </el-form-item>
             <el-form-item>
               <template #label>
@@ -727,9 +874,7 @@ async function refreshCard() {
                   </el-tooltip>
                 </span>
               </template>
-              <el-select v-model="form.avatarStyle" style="width: 100%">
-                <el-option v-for="s in AVATAR_STYLE_OPTIONS" :key="s" :label="s" :value="s" />
-              </el-select>
+              <AgentAvatarSelector v-model="form.avatarStyle" :disabled="loading" />
             </el-form-item>
             <el-form-item>
               <template #label>
@@ -1129,7 +1274,11 @@ async function refreshCard() {
 }
 
 .official-block {
+  /* flex 子項預設 min-width:auto，會被內部橫向卡片撐開，導致無法出現橫向捲動 */
   margin-bottom: 28px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .official-head {
@@ -1169,133 +1318,29 @@ async function refreshCard() {
   margin-bottom: 0;
 }
 
-.preset-scroller {
+.agent-presets-carousel {
   display: flex;
-  gap: 12px;
+  gap: 24px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   overflow-x: auto;
-  padding: 6px 2px 12px;
-  margin: 0 -4px;
+  overflow-y: visible;
+  /* 底部留空避免 3D hover 陰影被裁切；perspective 給子卡 rotateX 縱深感 */
+  padding: 24px 12px 60px;
+  margin: 0 -12px;
+  perspective: 1000px;
+  perspective-origin: 50% 50%;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
 }
 
-.preset-scroller::-webkit-scrollbar {
-  height: 5px;
-}
-
-.preset-card {
-  position: relative;
-  flex: 0 0 148px;
-  scroll-snap-align: start;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 14px 10px 12px;
-  border: 2px solid transparent;
-  border-radius: 18px;
-  cursor: pointer;
-  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
-  transition:
-    transform 0.38s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.38s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 0.22s ease;
-}
-
-/* 轻量装饰层（优化方案 2.3 B：悬停时层次加深） */
-.preset-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.12) 0%, transparent 45%);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.35s ease;
-}
-
-.preset-card:hover:not(:disabled)::before {
-  opacity: 1;
-}
-
-.preset-card:hover:not(:disabled) {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow:
-    0 18px 40px rgba(15, 23, 42, 0.14),
-    0 0 0 1px rgb(255 255 255 / 0.22) inset;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .preset-card:hover:not(:disabled) {
-    transform: translateY(-2px);
-  }
-}
-
-.preset-card.is-selected {
-  border-color: rgba(37, 99, 235, 0.5);
-  box-shadow: 0 6px 22px rgba(37, 99, 235, 0.18);
-}
-
-.preset-card:disabled {
-  opacity: 0.7;
-  cursor: wait;
-}
-
-.preset-card__loading {
-  position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  background: rgba(18, 18, 22, 0.55);
-  pointer-events: none;
-}
-
-.preset-card__avatar {
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin-bottom: 8px;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.07);
-  background: var(--buddy-surface-elevated);
-}
-
-.preset-card__avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.preset-card__role {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  margin-bottom: 8px;
-  border-radius: 10px;
-  background: rgba(37, 99, 235, 0.12);
-  color: var(--buddy-primary);
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
-}
-
-.preset-card__name {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--buddy-primary);
-  line-height: 1.3;
-  margin-bottom: 6px;
-}
-
-.preset-card__line {
-  font-size: 10px;
-  line-height: 1.45;
-  color: var(--buddy-text-muted);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.agent-presets-carousel::-webkit-scrollbar {
+  display: none;
 }
 
 .card-block {
@@ -1647,6 +1692,10 @@ async function refreshCard() {
 .agent-studio {
   position: relative;
   overflow: hidden;
+  /* 置於 flex 主工作區內時避免子區塊被內容撐寬，確保橫向捲動容器能受限於視口 */
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
   padding-bottom: 60px;
   background: var(--buddy-page-bg);
@@ -1765,7 +1814,6 @@ async function refreshCard() {
 /* --- 3. 核心 Bento 卡片材质 (Glassmorphism 2.0) --- */
 .agent-studio .buddy-card-surface,
 .agent-studio .hero-card__inner,
-.agent-studio .preset-card,
 .agent-studio .chibi-workshop__preview-card {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(243, 244, 246, 0.7) 100%) !important;
   backdrop-filter: blur(30px) saturate(180%) !important;
@@ -1780,7 +1828,6 @@ async function refreshCard() {
 /* 暗黑模式霓虹发光卡片 */
 :global(html.dark) .agent-studio .buddy-card-surface,
 :global(html.dark) .agent-studio .hero-card__inner,
-:global(html.dark) .agent-studio .preset-card,
 :global(html.dark) .agent-studio .chibi-workshop__preview-card {
   background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
@@ -1789,22 +1836,6 @@ async function refreshCard() {
     0 20px 40px -12px rgba(0, 0, 0, 0.8),
     0 0 20px rgba(99, 102, 241, 0.05),
     0 1px 1px rgba(255, 255, 255, 0.15) inset !important;
-}
-
-/* 磁悬浮预设卡片 Hover */
-.preset-card:hover:not(:disabled) {
-  transform: translateY(-8px) scale(1.02) !important;
-  border-color: rgba(99, 102, 241, 0.4) !important;
-  box-shadow: 0 24px 40px -10px rgba(99, 102, 241, 0.15) !important;
-  z-index: 2;
-}
-
-:global(html.dark) .preset-card:hover:not(:disabled) {
-  border-color: rgba(99, 102, 241, 0.6) !important;
-  box-shadow:
-    0 32px 60px -15px rgba(0, 0, 0, 1),
-    0 0 40px rgba(99, 102, 241, 0.3),
-    0 1px 1px rgba(255, 255, 255, 0.3) inset !important;
 }
 
 /* --- 4. 赛博朋克流程指引 (Cyber Steps) --- */
@@ -2082,14 +2113,8 @@ async function refreshCard() {
     transform: none !important;
     filter: none !important;
   }
-  .preset-card:hover:not(:disabled) {
-    transform: none !important;
-  }
   .agent-studio :deep(.el-slider__button:hover) {
     transform: none !important;
-  }
-  .preset-card.is-selected {
-    animation: none !important;
   }
 }
 
@@ -2131,47 +2156,7 @@ async function refreshCard() {
 :global(html.dark) .agent-studio :deep(.el-input__inner) { color: #f8fafc !important; }
 
 /* ==========================================================
-   2. 官方成品搭子卡片 (Preset Cards Holographic Upgrade)
-   ========================================================== */
-.preset-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.8) 100%) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.9) !important;
-  box-shadow: 0 8px 24px -6px rgba(15, 23, 42, 0.06), 0 1px 1px rgba(255, 255, 255, 0.6) inset !important;
-  border-radius: 24px !important;
-}
-
-:global(html.dark) .preset-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.8), 0 1px 1px rgba(255, 255, 255, 0.15) inset !important;
-}
-
-/* 选中状态：呼吸能量场 */
-.preset-card.is-selected {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4) inset, 0 12px 32px rgba(59, 130, 246, 0.25) !important;
-  transform: translateY(-4px) scale(1.02);
-  animation: preset-pulse 3s infinite alternate ease-in-out;
-}
-:global(html.dark) .preset-card.is-selected {
-  border-color: #8b5cf6 !important;
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.5) inset, 0 0 24px rgba(139, 92, 246, 0.4) !important;
-}
-
-@keyframes preset-pulse {
-  0% { filter: brightness(1); }
-  100% { filter: brightness(1.08); }
-}
-
-/* 卡片内小图标与标签 */
-.preset-card__role { background: rgba(59, 130, 246, 0.1) !important; color: #2563eb !important; border-radius: 8px !important; }
-:global(html.dark) .preset-card__role { background: rgba(139, 92, 246, 0.2) !important; color: #c4b5fd !important; }
-.preset-card__name { font-weight: 900 !important; color: var(--buddy-text) !important; }
-:global(html.dark) .preset-card__name { color: #f8fafc !important; }
-
-/* ==========================================================
-   3. 自定义色板与工坊按钮 (Swatches & Actions)
+   2. 自定义色板与工坊按钮 (Swatches & Actions)
    ========================================================== */
 /* 调色板按钮：发光晶体 */
 .chibi-swatch {
@@ -2395,5 +2380,921 @@ async function refreshCard() {
 :global(html.dark) .agent-studio .chibi-panel__title {
   background: linear-gradient(135deg, #93c5fd, #d8b4fe);
   -webkit-background-clip: text; color: transparent; border-bottom-color: rgba(168, 85, 247, 0.4);
+}
+
+/* =========================================
+   峡谷 Q 版形象工坊 · Glass 2.0（膠囊切換 + 分路卡片）
+   ========================================= */
+
+.chibi-workshop.chibi-workshop--glass2 {
+  margin-bottom: 32px;
+  padding: 32px 24px 28px;
+  border-radius: 24px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+}
+
+.chibi-workshop__header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.chibi-workshop__title--hero {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.chibi-workshop__subtitle {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--buddy-text-secondary, #64748b);
+}
+
+.chibi-mode-toggle.chibi-mode-toggle--segment {
+  display: flex;
+  justify-content: center;
+  width: auto;
+  margin-bottom: 28px;
+}
+
+.toggle-track {
+  position: relative;
+  display: flex;
+  background: var(--buddy-surface-2, #f1f5f9);
+  padding: 6px;
+  border-radius: 100px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.toggle-btn {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  flex: 1;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--buddy-text-regular, #475569);
+  background: transparent;
+  border: none;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.toggle-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.toggle-btn.is-active {
+  color: #3b82f6;
+}
+
+.toggle-glider {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  height: calc(100% - 12px);
+  width: calc(50% - 6px);
+  background: #ffffff;
+  border-radius: 100px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 1;
+}
+
+.toggle-glider.preset {
+  transform: translateX(0);
+}
+.toggle-glider.custom {
+  transform: translateX(100%);
+}
+
+:global(html.dark) .toggle-track {
+  background: rgba(15, 23, 42, 0.55);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+:global(html.dark) .toggle-glider {
+  background: rgba(30, 41, 59, 0.95);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+}
+:global(html.dark) .toggle-btn {
+  color: #94a3b8;
+}
+:global(html.dark) .toggle-btn.is-active {
+  color: #93c5fd;
+}
+
+.chibi-panel--lane .chibi-panel__header {
+  margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.chibi-lane-panel__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--buddy-text-primary, #0f172a);
+}
+
+.chibi-lane-panel__hint {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+:global(html.dark) .chibi-lane-panel__title {
+  color: #f8fafc;
+}
+
+.chibi-lane-grid.chibi-lane-grid--cards {
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.chibi-lane-btn {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  border: 1px solid var(--buddy-border, #e2e8f0);
+  background: var(--buddy-surface, #ffffff);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chibi-lane-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(var(--buddy-rgb-brand, 59 130 246) / 0.45);
+}
+
+.btn-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 8px 6px;
+  gap: 4px;
+}
+
+.btn-icon {
+  font-size: 28px;
+  line-height: 1;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.btn-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--buddy-text-regular, #475569);
+  transition: color 0.3s ease;
+}
+
+.btn-sublabel {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--buddy-text-muted, #94a3b8);
+  line-height: 1.2;
+  text-align: center;
+  max-width: 100%;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.chibi-lane-btn:hover {
+  transform: translateY(-4px);
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.chibi-lane-btn:hover .btn-icon {
+  transform: scale(1.15) translateY(-2px);
+}
+
+.chibi-lane-btn.is-selected {
+  border-color: transparent;
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.05) 0%,
+    rgba(124, 58, 237, 0.05) 100%
+  );
+  box-shadow:
+    0 0 0 2px #3b82f6,
+    0 8px 24px rgba(59, 130, 246, 0.25);
+  transform: translateY(-4px);
+}
+
+.chibi-lane-btn.is-selected .btn-label {
+  color: #3b82f6;
+}
+
+.chibi-lane-btn.is-selected .btn-sublabel {
+  color: rgba(37, 99, 235, 0.85);
+}
+
+.chibi-lane-btn.is-selected .btn-glow {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 40px;
+  background: #3b82f6;
+  filter: blur(20px);
+  opacity: 0.4;
+  animation: lane-pulse 2s infinite alternate;
+}
+
+.chibi-lane-btn.is-selected::after {
+  content: '✓';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3b82f6;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 900;
+  z-index: 3;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+  animation: pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes lane-pulse {
+  0% {
+    opacity: 0.2;
+    transform: translateX(-50%) scaleY(0.8);
+  }
+  100% {
+    opacity: 0.6;
+    transform: translateX(-50%) scaleY(1.2);
+  }
+}
+
+:global(html.dark) .chibi-lane-btn {
+  background: rgba(15, 23, 42, 0.4);
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #e2e8f0;
+}
+
+:global(html.dark) .chibi-lane-btn.is-selected {
+  box-shadow:
+    0 0 0 2px #60a5fa,
+    0 8px 24px rgba(59, 130, 246, 0.35);
+}
+
+:global(html.dark) .chibi-lane-btn.is-selected::after {
+  background: #3b82f6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle-glider {
+    transition: none;
+  }
+  .chibi-lane-btn.is-selected .btn-glow {
+    animation: none;
+    opacity: 0.35;
+  }
+  .chibi-lane-btn.is-selected::after {
+    animation: none;
+  }
+}
+
+/* --- 捏臉模塊：潮玩盲盒風（色卡 + 籌碼，與 qForm 枚舉對齊） --- */
+
+.chibi-doll-panel__header {
+  margin-bottom: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.chibi-doll-panel__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--buddy-text-primary, #0f172a);
+}
+
+.chibi-doll-panel__hint {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+:global(html.dark) .chibi-doll-panel__title {
+  color: #f8fafc;
+}
+
+.chibi-feature-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background: var(--buddy-surface-2, #f8fafc);
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+:global(html.dark) .chibi-feature-container {
+  background: rgba(15, 23, 42, 0.45);
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+.feature-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feature-group--split {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.feature-group__col {
+  flex: 1;
+  min-width: min(100%, 200px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feature-group--colors {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.feature-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--buddy-text-primary, #334155);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.feature-label::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 12px;
+  background: #3b82f6;
+  border-radius: 2px;
+}
+
+.feature-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.feature-label-row .feature-label {
+  margin: 0;
+}
+
+.color-swatches {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.color-swatches--dense {
+  gap: 10px;
+}
+
+.color-swatches--hair .swatch-btn {
+  width: 40px;
+  height: 40px;
+}
+
+.swatch-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  padding: 0;
+  background: var(--swatch-color);
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.swatch-btn:hover {
+  transform: scale(1.15) translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.swatch-btn.is-active {
+  transform: scale(1.1);
+  box-shadow:
+    0 0 0 2px #ffffff,
+    0 0 0 4px #3b82f6,
+    0 8px 16px rgba(59, 130, 246, 0.3);
+}
+
+:global(html.dark) .swatch-btn {
+  border-color: rgba(15, 23, 42, 0.9);
+}
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chip-list--frame {
+  gap: 8px;
+}
+
+.feature-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #ffffff;
+  border: 1px solid var(--buddy-border, #e2e8f0);
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--buddy-text-regular, #475569);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.chip-icon {
+  font-size: 16px;
+  line-height: 1;
+  transition: transform 0.3s ease;
+}
+
+.chip-text {
+  white-space: nowrap;
+}
+
+.feature-chip:hover {
+  transform: translateY(-2px);
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.feature-chip:hover .chip-icon {
+  transform: scale(1.2) rotate(5deg);
+}
+
+.feature-chip.is-active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+  border-color: transparent;
+  color: #3b82f6;
+  font-weight: 600;
+  box-shadow:
+    0 0 0 1.5px #3b82f6,
+    0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.feature-chip--frame {
+  flex: 1 1 calc(50% - 6px);
+  min-width: 140px;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .feature-chip--frame {
+    flex: 1 1 calc(25% - 8px);
+    min-width: 0;
+  }
+}
+
+:global(html.dark) .feature-chip {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #e2e8f0;
+}
+
+:global(html.dark) .feature-chip.is-active {
+  color: #93c5fd;
+  box-shadow:
+    0 0 0 1.5px #60a5fa,
+    0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swatch-btn,
+  .feature-chip,
+  .feature-chip:hover .chip-icon {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* --- 雙列：全息展台 + 捏臉控制（聯動 framePreset / 氛圍主題） --- */
+
+.chibi-workshop__grid--workspace {
+  display: block;
+}
+
+.chibi-workspace-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .chibi-workspace-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .chibi-controls-scroll {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+.chibi-controls-scroll {
+  min-width: 0;
+  max-height: min(82vh, 960px);
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-gutter: stable;
+}
+
+.chibi-preview-showcase {
+  position: relative;
+  min-height: 440px;
+  border-radius: 24px;
+  background: linear-gradient(165deg, #0f172a 0%, #020617 88%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 52px 16px 24px;
+  box-shadow:
+    0 28px 56px rgba(0, 0, 0, 0.38) inset,
+    0 20px 48px rgba(0, 0, 0, 0.25);
+  transition:
+    box-shadow 0.5s ease,
+    border-color 0.5s ease;
+  perspective: 900px;
+  --vibe-color: #60a5fa;
+}
+
+.chibi-preview-showcase::before {
+  content: '';
+  position: absolute;
+  top: -28%;
+  left: -25%;
+  right: -25%;
+  bottom: 12%;
+  background: radial-gradient(circle at 50% 32%, var(--vibe-color) 0%, transparent 58%);
+  opacity: 0.2;
+  filter: blur(46px);
+  transition:
+    background 0.85s ease,
+    opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.chibi-preview-showcase[data-vibe='nature'] {
+  --vibe-color: #34d399;
+}
+.chibi-preview-showcase[data-vibe='void'] {
+  --vibe-color: #818cf8;
+}
+.chibi-preview-showcase[data-vibe='flame'] {
+  --vibe-color: #fb923c;
+}
+.chibi-preview-showcase[data-vibe='cyber'] {
+  --vibe-color: #c084fc;
+}
+
+.showcase-backdrop {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+.theme-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 6;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: #f8fafc;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.avatar-hologram {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  animation: showcase-float 4s ease-in-out infinite;
+}
+
+.hologram-aura {
+  position: absolute;
+  inset: -6% -18% 22%;
+  background: radial-gradient(ellipse at center, var(--vibe-color) 0%, transparent 72%);
+  opacity: 0.38;
+  filter: blur(24px);
+  transition: background 0.85s ease, opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.hologram-scanline {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.55);
+  animation: showcase-scan 3.2s linear infinite;
+  opacity: 0.55;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.showcase-avatar-ring {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 204px;
+  height: 204px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.18), transparent 52%),
+    radial-gradient(circle at 50% 100%, rgba(255, 255, 255, 0.08) 0%, transparent 48%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.14) inset,
+    0 16px 44px rgba(0, 0, 0, 0.45);
+}
+
+.showcase-avatar-ring :deep(.agent-chibi) {
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 28px rgba(96, 165, 250, 0.45);
+}
+
+.showcase-meta {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  text-align: center;
+  padding: 0 12px;
+  margin-bottom: 10px;
+}
+
+.showcase-lane-hint {
+  margin: 0 0 6px;
+  font-size: 11px;
+  color: rgba(226, 232, 240, 0.92);
+}
+
+.showcase-lane-hint strong {
+  color: #fff;
+}
+
+.showcase-tip {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.5;
+  color: rgba(148, 163, 184, 0.95);
+}
+
+.showcase-pedestal {
+  width: 200px;
+  height: 38px;
+  margin-top: 2px;
+  margin-bottom: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.55),
+    0 0 42px rgba(59, 130, 246, 0.22) inset;
+  transform: rotateX(58deg);
+  transform-origin: center center;
+  z-index: 2;
+  transition: box-shadow 0.85s ease;
+}
+
+.chibi-preview-showcase[data-vibe='nature'] .showcase-pedestal {
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.55),
+    0 0 46px rgba(52, 211, 153, 0.35) inset;
+}
+.chibi-preview-showcase[data-vibe='void'] .showcase-pedestal {
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.55),
+    0 0 46px rgba(129, 140, 248, 0.38) inset;
+}
+.chibi-preview-showcase[data-vibe='flame'] .showcase-pedestal {
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.55),
+    0 0 46px rgba(251, 146, 60, 0.38) inset;
+}
+.chibi-preview-showcase[data-vibe='cyber'] .showcase-pedestal {
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.55),
+    0 0 46px rgba(192, 132, 252, 0.4) inset;
+}
+
+@keyframes showcase-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes showcase-scan {
+  0% {
+    top: 14%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.88;
+  }
+  88% {
+    opacity: 0.88;
+  }
+  100% {
+    top: 76%;
+    opacity: 0;
+  }
+}
+
+/* 流光氛圍卡 */
+.vibe-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.vibe-card {
+  position: relative;
+  min-height: 72px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 10px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.55);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.vibe-card__bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.14;
+  transition: opacity 0.3s ease;
+  z-index: 0;
+}
+
+.vibe-card[data-color='cyber'] .vibe-card__bg {
+  background: linear-gradient(135deg, #4c1d95, #a855f7);
+}
+.vibe-card[data-color='nature'] .vibe-card__bg {
+  background: linear-gradient(135deg, #064e3b, #10b981);
+}
+.vibe-card[data-color='flame'] .vibe-card__bg {
+  background: linear-gradient(135deg, #7f1d1d, #ef4444);
+}
+.vibe-card[data-color='void'] .vibe-card__bg {
+  background: linear-gradient(135deg, #312e81, #6366f1);
+}
+
+.vibe-card__icon,
+.vibe-card__text {
+  position: relative;
+  z-index: 1;
+}
+
+.vibe-card__icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.vibe-card__text {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--buddy-text-primary, #0f172a);
+}
+
+.vibe-card:hover {
+  transform: translateY(-3px);
+}
+
+.vibe-card:hover .vibe-card__bg {
+  opacity: 0.32;
+}
+
+.vibe-card.is-active {
+  transform: translateY(-3px) scale(1.02);
+  border-color: transparent;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+}
+
+.vibe-card.is-active .vibe-card__bg {
+  opacity: 1;
+}
+
+.vibe-card.is-active .vibe-card__text {
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+:global(html.dark) .vibe-card {
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+:global(html.dark) .vibe-card__text {
+  color: #e2e8f0;
+}
+
+:global(html.dark) .vibe-card.is-active .vibe-card__text {
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-hologram {
+    animation: none;
+  }
+  .hologram-scanline {
+    animation: none;
+  }
+  .vibe-card:hover,
+  .vibe-card.is-active {
+    transform: none;
+  }
 }
 </style>

@@ -1,19 +1,13 @@
 <script setup lang="ts">
-import {
-  computed,
-  nextTick,
-  onBeforeUnmount,
-  onMounted,
-  ref,
-  watch,
-} from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter, RouterLink, type RouteLocationRaw } from 'vue-router'
 import {
   ChatDotRound,
-  Compass,
-  Grid,
-  HomeFilled,
+  Guide,
+  House,
+  Location,
   Menu,
+  Monitor,
   Moon,
   Opportunity,
   Search,
@@ -29,24 +23,24 @@ import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
 const router = useRouter()
+
+/** 論壇列表資訊密度高，隱藏次級上下文條避免三重導覽堆疊 */
+const showWebContextBar = computed(
+  () => String(route.name) !== 'forum',
+)
 const user = useUserStore()
 const forum = useForumStore()
 const ui = useUiStore()
 const { module: appModule, pageSubtitle } = useAppModule()
 const drawerOpen = ref(false)
 
-const navDesktopRef = ref<HTMLElement | null>(null)
 const searchOpen = ref(false)
 const headerQ = ref('')
 const searchInputRef = ref<{ focus?: () => void } | null>(null)
 
-const inkStyle = ref<Record<string, string>>({
-  left: '0px',
-  width: '0px',
-  opacity: '0',
-})
-
-const nickInitial = computed(() => user.profile?.nickname?.trim().slice(0, 1) || '我')
+const avatarHeaderSrc = computed(
+  () => user.profile?.avatarUrl || '/forum/avatars/a01.svg'
+)
 
 /** 与 meta.tab 对齐；子路由继承父级 tab，合并后由 route.meta.tab 提供 */
 const resolvedTab = computed((): string | null => {
@@ -74,10 +68,10 @@ const layoutBack = computed((): {
 
 /** 与路由 meta.tab 对齐，用于子页高亮父级入口（如「元流档案」下的子页） */
 const tabs = [
-  { name: 'home', label: '首页', path: '/app/home', icon: HomeFilled },
-  { name: 'feed', label: '版本速递', path: '/app/feed', icon: Compass },
+  { name: 'home', label: '首页', path: '/app/home', icon: House },
+  { name: 'feed', label: '版本速递', path: '/app/feed', icon: Guide },
   { name: 'agent', label: 'AI搭子', path: '/app/agent', icon: ChatDotRound },
-  { name: 'forum', label: '峡谷广场', path: '/app/forum', icon: Grid },
+  { name: 'forum', label: '峡谷广场', path: '/app/forum', icon: Monitor },
   { name: 'me', label: '元流档案', path: '/app/me', icon: User },
 ] as const
 
@@ -93,28 +87,9 @@ function navigate(path: string) {
   void router.push(path)
 }
 
-/** 指示条对齐活动 Tab：等 DOM 更新后再读几何，双 rAF 避开首帧布局未稳定 */
-function layoutNavInk() {
-  nextTick(() => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const nav = navDesktopRef.value
-        if (!nav) return
-        const active = nav.querySelector<HTMLElement>('.nav-link.is-active')
-        if (!active) {
-          inkStyle.value = { left: '0px', width: '0px', opacity: '0' }
-          return
-        }
-        const nr = nav.getBoundingClientRect()
-        const ar = active.getBoundingClientRect()
-        inkStyle.value = {
-          left: `${ar.left - nr.left + nav.scrollLeft}px`,
-          width: `${ar.width}px`,
-          opacity: '1',
-        }
-      })
-    })
-  })
+function goBrandHome() {
+  drawerOpen.value = false
+  void router.push('/app/home')
 }
 
 function openHeaderSearch() {
@@ -134,19 +109,11 @@ function submitHeaderSearch() {
 }
 
 watch(
-  () => [route.fullPath, resolvedTab.value] as const,
+  () => route.fullPath,
   () => {
     drawerOpen.value = false
-    layoutNavInk()
   },
-  { flush: 'post' },
 )
-
-function onResize() {
-  layoutNavInk()
-}
-
-let navResizeObserver: ResizeObserver | null = null
 
 function onGlobalKeydown(e: KeyboardEvent) {
   if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'k') return
@@ -157,140 +124,120 @@ function onGlobalKeydown(e: KeyboardEvent) {
 }
 
 onMounted(() => {
-  layoutNavInk()
-  window.addEventListener('resize', onResize)
   window.addEventListener('keydown', onGlobalKeydown)
-  const nav = navDesktopRef.value
-  if (nav && typeof ResizeObserver !== 'undefined') {
-    navResizeObserver = new ResizeObserver(() => layoutNavInk())
-    navResizeObserver.observe(nav)
-  }
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', onResize)
   window.removeEventListener('keydown', onGlobalKeydown)
-  navResizeObserver?.disconnect()
-  navResizeObserver = null
 })
 </script>
 
 <template>
   <div class="main-shell buddy-app-container" :data-app-module="appModule.id">
     <a href="#main-content" class="skip-to-main">跳到主要内容</a>
-    <header
-      class="app-header app-header--glass"
-      :class="{ 'home-header': route.name === 'home' }"
-      aria-label="站点主导航"
-    >
-      <div class="header-inner">
-        <div class="header-start">
+    <header class="gl-header" aria-label="站点主导航">
+      <div class="gl-header-inner">
+        <div class="gl-header-start">
           <BuddyBackButton
             v-if="layoutBack"
             :fallback="layoutBack.fallback"
             :prefer-history="layoutBack.preferHistory"
-            class="header-back"
+            class="gl-header-back"
           />
-          <div class="brand-wrap">
-            <RouterLink to="/app/home" class="brand brand--glow" @click="drawerOpen = false"
-              >元流同频</RouterLink
-            >
-            <span
-              class="brand-tagline"
-              title="将王者电竞 IP 元素与城市文旅、潮流文化深度融合，探索高质量、场景化的电竞 + AI 新内容与新体验。网页端突出宽屏工作台与键鼠交互。"
-              >电竞 IP · 文旅 · 潮流 · Web 场景化 AI</span
-            >
+          <div class="gl-brand" role="button" tabindex="0" @click="goBrandHome" @keydown.enter.prevent="goBrandHome">
+            <span class="gl-brand-text">元流同频</span>
           </div>
         </div>
 
-        <div class="header-trail">
-          <nav ref="navDesktopRef" class="nav-desktop" aria-label="主导航">
-            <span class="nav-ink" aria-hidden="true" :style="inkStyle" />
+        <nav class="gl-nav-menu" aria-label="主导航">
+          <RouterLink
+            v-for="t in tabs"
+            :key="t.name"
+            :to="t.path"
+            class="gl-nav-item"
+            :class="{ 'is-active': tabActive(t.name) }"
+            :aria-current="tabActive(t.name) ? 'page' : undefined"
+            @click="drawerOpen = false"
+          >
+            <el-icon class="gl-nav-icon"><component :is="t.icon" /></el-icon>
+            <span>{{ t.label }}</span>
+          </RouterLink>
+        </nav>
+
+        <div class="gl-header-actions">
+          <button
+            type="button"
+            class="gl-action-btn"
+            :title="ui.isDark ? '切换为浅色' : '切换为暗黑'"
+            :aria-label="ui.isDark ? '切换为浅色' : '切换为暗黑'"
+            @click="ui.toggleDark()"
+          >
+            <el-icon><Moon v-if="!ui.isDark" /><Sunny v-else /></el-icon>
+          </button>
+          <button
+            type="button"
+            class="gl-action-btn"
+            title="城市出行"
+            aria-label="城市出行"
+            @click="navigate('/app/feed/city')"
+          >
+            <el-icon><Location /></el-icon>
+          </button>
+          <button
+            type="button"
+            class="gl-action-btn"
+            title="工作台指令（Ctrl+K）"
+            aria-label="工作台指令"
+            @click="ui.openCommandPalette()"
+          >
+            <el-icon><Opportunity /></el-icon>
+          </button>
+          <div class="gl-header-search" :class="{ 'is-open': searchOpen }">
             <button
-              v-for="t in tabs"
-              :key="t.name"
+              v-if="!searchOpen"
               type="button"
-              class="nav-link"
-              :class="{ 'is-active': tabActive(t.name) }"
-              :aria-current="tabActive(t.name) ? 'page' : undefined"
-              @click="navigate(t.path)"
+              class="gl-action-btn"
+              aria-label="展开搜索"
+              @click="openHeaderSearch"
             >
-              <el-icon class="nav-link-ico" :size="18"><component :is="t.icon" /></el-icon>
-              <span class="nav-link-text">{{ t.label }}</span>
+              <el-icon><Search /></el-icon>
             </button>
-          </nav>
+            <el-input
+              v-else
+              ref="searchInputRef"
+              v-model="headerQ"
+              class="gl-header-search__field"
+              clearable
+              placeholder="搜索帖子关键词"
+              @keydown.enter.prevent="submitHeaderSearch"
+              @keyup.escape="searchOpen = false"
+            >
+              <template #prefix>
+                <el-icon class="gl-header-search__ico"><Search /></el-icon>
+              </template>
+            </el-input>
+          </div>
 
-          <div class="header-end">
-            <el-button
-              class="header-theme"
-              text
-              circle
-              :title="ui.isDark ? '切换为浅色' : '切换为暗黑'"
-              :aria-label="ui.isDark ? '切换为浅色' : '切换为暗黑'"
-              @click="ui.toggleDark()"
-            >
-              <el-icon :size="20"><Moon v-if="!ui.isDark" /><Sunny v-else /></el-icon>
-            </el-button>
-            <el-button
-              class="header-cmd"
-              text
-              circle
-              title="工作台指令（Ctrl+K）"
-              @click="ui.openCommandPalette()"
-            >
-              <el-icon :size="20"><Opportunity /></el-icon>
-            </el-button>
-            <div class="header-search" :class="{ 'is-open': searchOpen }">
-              <el-button
-                v-if="!searchOpen"
-                class="header-search__toggle"
-                text
-                circle
-                aria-label="展开搜索"
-                @click="openHeaderSearch"
-              >
-                <el-icon :size="20"><Search /></el-icon>
-              </el-button>
-              <el-input
-                v-else
-                ref="searchInputRef"
-                v-model="headerQ"
-                class="header-search__field"
-                clearable
-                placeholder="搜索帖子关键词"
-                @keydown.enter.prevent="submitHeaderSearch"
-                @keyup.escape="searchOpen = false"
-              >
-                <template #prefix>
-                  <el-icon class="header-search__ico"><Search /></el-icon>
-                </template>
-              </el-input>
+          <div class="gl-user-profile" role="button" tabindex="0" title="元流档案" @click="navigate('/app/me')" @keydown.enter.prevent="navigate('/app/me')">
+            <div class="gl-avatar-ring">
+              <img class="gl-avatar" :src="avatarHeaderSrc" alt="" />
             </div>
-            <RouterLink
-              to="/app/me"
-              class="header-avatar"
-              :title="user.profile?.nickname || '元流档案'"
-              @click="drawerOpen = false"
-            >
-              <el-avatar :size="32" :src="user.profile?.avatarUrl || undefined">{{
-                nickInitial
-              }}</el-avatar>
-            </RouterLink>
           </div>
         </div>
 
-        <el-button
-          class="nav-mobile-btn"
-          text
-          aria-label="打开导航菜单"
-          @click="drawerOpen = true"
-        >
+        <el-button class="nav-mobile-btn" text aria-label="打开导航菜单" @click="drawerOpen = true">
           <el-icon :size="22"><Menu /></el-icon>
         </el-button>
       </div>
     </header>
 
-    <div class="web-context-bar" role="status" aria-live="polite" aria-label="当前功能域与页面上下文">
+    <div
+      v-show="showWebContextBar"
+      class="web-context-bar"
+      role="status"
+      aria-live="polite"
+      aria-label="当前功能域与页面上下文"
+    >
       <span class="web-context-bar__k">{{ appModule.shortLabel }}域</span>
       <span class="web-context-bar__s" aria-hidden="true">·</span>
       <span class="web-context-bar__t">
@@ -434,357 +381,220 @@ onBeforeUnmount(() => {
   text-decoration: none;
 }
 
-/* Glassmorphism 顶栏（Design Tokens：buddy-glass-*） */
-.app-header--glass {
+/* ==========================================================
+   GLOBAL HEADER (悬浮毛玻璃导航栏 · gl-)
+   ========================================================== */
+.gl-header {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 999;
+  width: 100%;
   flex-shrink: 0;
-  color: var(--buddy-header-text);
-  background: var(--buddy-glass-bg);
-  backdrop-filter: var(--buddy-glass-blur);
-  -webkit-backdrop-filter: var(--buddy-glass-blur);
-  border-bottom: var(--buddy-glass-border);
-  box-shadow: var(--buddy-glass-shadow);
-  transition:
-    box-shadow var(--buddy-duration-sm) var(--buddy-ease-out),
-    background var(--buddy-duration-sm) var(--buddy-ease-out);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 12px 32px rgba(15, 23, 42, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.5) inset;
+  transition: all 0.3s ease;
 }
 
-.app-header--glass::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    rgb(var(--buddy-rgb-brand) / 0.24) 0%,
-    rgb(var(--buddy-rgb-accent) / 0.22) 38%,
-    rgb(var(--buddy-rgb-honor-gold) / 0.38) 50%,
-    rgb(var(--buddy-rgb-accent) / 0.2) 62%,
-    rgb(var(--buddy-rgb-teal) / 0.22) 100%
-  );
-  pointer-events: none;
+:global(html.dark) .gl-header {
+  background: rgba(15, 23, 42, 0.65);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.55),
+    0 1px 0 rgba(255, 255, 255, 0.06) inset;
 }
 
-/* ==========================================================
-   首頁專屬：深色系玻璃態頂欄 (與 Dark Stage 輪播無縫銜接)
-   ========================================================== */
-.app-header.home-header {
-  backdrop-filter: blur(16px) saturate(120%);
-  -webkit-backdrop-filter: blur(16px) saturate(120%);
-  background: rgba(15, 23, 42, 0.65); /* 深色夜空底色 */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+.gl-header-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+  flex-wrap: wrap;
 }
 
-.app-header.home-header::after {
-  opacity: 0.8; /* 增強底部光效彩帶 */
+.gl-header-start {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
-/* 調整首頁頂欄文字顏色，使其在深色背景下清晰可見 */
-.app-header.home-header .brand {
-  background: linear-gradient(to right, #60a5fa, #c084fc, #38bdf8);
+.gl-header-back {
+  flex-shrink: 0;
+}
+
+/* --- 品牌 Logo --- */
+.gl-brand {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.gl-brand-text {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #2563eb 0%, #8b5cf6 50%, #06b6d4 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 0 8px rgba(192, 132, 252, 0.4));
+  transition: filter 0.3s ease;
+}
+.gl-brand:hover .gl-brand-text {
+  filter: brightness(1.2) drop-shadow(0 2px 8px rgba(139, 92, 246, 0.3));
 }
 
-.app-header.home-header .nav-link {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.app-header.home-header .nav-link:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.app-header.home-header .nav-link.is-active {
-  color: #60a5fa; /* 亮藍色 */
-  background: rgba(59, 130, 246, 0.15);
-  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.3);
-}
-
-.app-header.home-header .header-search__toggle,
-.app-header.home-header .header-cmd,
-.app-header.home-header .header-theme {
-  color: rgba(255, 255, 255, 0.8) !important;
-}
-
-.app-header.home-header .header-search__toggle:hover,
-.app-header.home-header .header-cmd:hover,
-.app-header.home-header .header-theme:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-}
-
-.app-header {
-  position: relative;
-}
-
-.header-inner {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
-  min-height: 54px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 12px;
-}
-
-.header-start {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  min-width: 0;
-}
-
-.brand-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0;
-  min-width: 0;
-}
-
-.brand-tagline {
+/* --- 核心导航 --- */
+.gl-nav-menu {
   display: none;
-  margin-top: 1px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  line-height: 1.2;
-  color: var(--buddy-text-muted);
-  max-width: 200px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-@media (min-width: 900px) {
-  .brand-tagline {
-    display: block;
-  }
-}
-
-.header-back {
-  flex-shrink: 0;
-}
-
-.header-trail {
+  align-items: center;
+  gap: 8px;
   flex: 1;
-  display: none;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 14px;
+  justify-content: center;
   min-width: 0;
 }
 
 @media (min-width: 768px) {
-  .header-trail {
+  .gl-nav-menu {
     display: flex;
   }
 }
 
-.brand {
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-decoration: none;
-  flex-shrink: 0;
-  background: var(--buddy-gradient-brand-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  transition:
-    filter var(--buddy-duration-sm) var(--buddy-ease-out),
-    transform var(--buddy-duration-sm) var(--buddy-ease-spring);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  @keyframes buddy-brand-glow {
-    0%,
-    100% {
-      filter: drop-shadow(0 0 6px rgb(var(--buddy-rgb-brand) / 0.35));
-    }
-    33% {
-      filter:
-        drop-shadow(0 0 12px rgb(var(--buddy-rgb-accent) / 0.38))
-        drop-shadow(0 0 20px rgb(var(--buddy-rgb-honor-gold) / 0.22));
-    }
-    50% {
-      filter: drop-shadow(0 0 14px rgb(var(--buddy-rgb-accent) / 0.42));
-    }
-  }
-
-  .brand--glow {
-    animation: buddy-brand-glow 3.2s ease-in-out infinite;
-  }
-}
-
-.brand:hover {
-  animation: none;
-  filter: brightness(1.08);
-  transform: scale(1.02);
-}
-
-.brand:active {
-  transform: scale(0.98);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .brand:hover,
-  .brand:active {
-    transform: none;
-  }
-}
-
-.nav-desktop {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex: 1;
-  justify-content: flex-end;
-  min-width: 0;
-}
-
-.nav-ink {
-  position: absolute;
-  bottom: 4px;
-  height: 3px;
-  border-radius: 4px;
-  background: var(--buddy-gradient-brand-ribbon);
-  pointer-events: none;
-  z-index: 0;
-  transform: translateZ(0);
-  transition:
-    left 0.4s var(--buddy-ease-emphasized, cubic-bezier(0.2, 0.75, 0.25, 1)),
-    width 0.4s var(--buddy-ease-emphasized, cubic-bezier(0.2, 0.75, 0.25, 1)),
-    opacity 0.28s var(--buddy-ease-out, ease);
-  box-shadow:
-    0 0 12px rgb(var(--buddy-rgb-brand) / 0.32),
-    0 0 18px rgb(var(--buddy-rgb-honor-gold) / 0.18);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .nav-ink {
-    transition: opacity 0.15s ease;
-  }
-}
-
-.nav-link {
-  position: relative;
-  z-index: 1;
+.gl-nav-item {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  border: none;
-  background: transparent;
-  color: var(--buddy-text-muted);
-  font-size: 14px;
-  font-weight: 500;
-  padding: 8px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition:
-    color var(--buddy-duration-sm) var(--buddy-ease-out),
-    background var(--buddy-duration-sm) var(--buddy-ease-out),
-    box-shadow var(--buddy-duration-sm) var(--buddy-ease-out),
-    transform var(--buddy-duration-xs) var(--buddy-ease-spring);
+  gap: 6px;
+  padding: 8px 20px;
+  border-radius: 100px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #64748b;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.nav-link-ico {
-  flex-shrink: 0;
-  opacity: 0.88;
+.gl-nav-icon {
+  font-size: 16px;
+  opacity: 0.8;
 }
 
-.nav-link.is-active .nav-link-ico {
+.gl-nav-item:hover {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.04);
+}
+:global(html.dark) .gl-nav-item:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.gl-nav-item.is-active {
+  color: #ffffff;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
+}
+.gl-nav-item.is-active .gl-nav-icon {
   opacity: 1;
 }
 
-.nav-link:hover {
-  color: var(--buddy-text);
-  background: rgb(var(--buddy-rgb-brand) / 0.08);
-}
-
-.nav-link:active {
-  transform: scale(0.97);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .nav-link:active {
-    transform: none;
-  }
-}
-
-.nav-link.is-active {
-  color: #1e40af;
-  background: var(--buddy-nav-active-bg);
-  box-shadow:
-    0 0 0 1px rgb(var(--buddy-rgb-brand) / 0.2),
-    0 4px 16px rgb(var(--buddy-rgb-brand) / 0.09);
-}
-
-.header-end {
+/* --- 右侧工具枢纽 --- */
+.gl-header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   flex-shrink: 0;
+  min-width: 0;
 }
 
-.header-search {
+.gl-action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+.gl-action-btn:hover {
+  background: rgba(15, 23, 42, 0.05);
+  color: #3b82f6;
+  transform: translateY(-2px);
+}
+:global(html.dark) .gl-action-btn {
+  color: #94a3b8;
+}
+:global(html.dark) .gl-action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #60a5fa;
+}
+
+.gl-header-search {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   min-width: 0;
 }
 
-.header-search__toggle {
-  color: var(--buddy-text-secondary) !important;
-}
-
-.header-search__field {
+.gl-header-search__field {
   width: min(220px, 28vw);
 }
 
-.header-search__field :deep(.el-input__wrapper) {
+.gl-header-search__field :deep(.el-input__wrapper) {
   border-radius: 999px;
   box-shadow: 0 0 0 1px rgb(var(--buddy-rgb-brand) / 0.14);
 }
 
-.header-search__ico {
+.gl-header-search__ico {
   color: var(--buddy-primary);
   opacity: 0.85;
 }
 
-.header-avatar {
-  display: flex;
-  align-items: center;
+.gl-user-profile {
+  cursor: pointer;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+.gl-avatar-ring {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  box-shadow: 0 2px 10px rgb(var(--buddy-rgb-brand) / 0.15);
-  transition:
-    transform var(--buddy-duration-sm) var(--buddy-ease-spring),
-    box-shadow var(--buddy-duration-sm) var(--buddy-ease-out);
+  padding: 2px;
+  background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
+  transition: transform 0.3s ease;
 }
-
-.header-avatar:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 16px rgb(var(--buddy-rgb-brand) / 0.22);
+.gl-user-profile:hover .gl-avatar-ring {
+  transform: scale(1.1) rotate(15deg);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .header-avatar:hover {
-    transform: none;
-  }
+.gl-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  display: block;
+}
+:global(html.dark) .gl-avatar {
+  border-color: #0f172a;
 }
 
 .nav-mobile-btn {
-  color: var(--buddy-header-text) !important;
+  color: #64748b !important;
   padding: 8px !important;
   margin-left: auto;
   flex-shrink: 0;
@@ -796,25 +606,38 @@ onBeforeUnmount(() => {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .gl-nav-item.is-active,
+  .gl-action-btn:hover,
+  .gl-user-profile:hover .gl-avatar-ring {
+    transform: none !important;
+  }
+}
+
 .web-context-bar {
   display: none;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 8px max(16px, env(safe-area-inset-left)) 10px max(16px, env(safe-area-inset-right));
+  width: fit-content;
+  max-width: min(1280px, 100%);
+  margin: 16px auto 0;
+  padding: 8px 24px;
   font-size: 11px;
   line-height: 1.45;
   color: var(--buddy-text-secondary);
-  border-bottom: 1px solid rgb(15 23 42 / 0.06);
-  background: linear-gradient(
-    90deg,
-    rgb(var(--buddy-rgb-brand) / 0.05) 0%,
-    rgb(var(--buddy-rgb-accent) / 0.04) 40%,
-    rgb(var(--buddy-rgb-honor-gold) / 0.06) 50%,
-    rgb(var(--buddy-rgb-teal) / 0.04) 100%
-  );
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+}
+
+:global(html.dark) .web-context-bar {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.55);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
 @media (min-width: 900px) {
@@ -968,14 +791,6 @@ onBeforeUnmount(() => {
   font-family: ui-monospace, monospace;
   border: 1px solid rgb(15 23 42 / 0.12);
   background: rgb(255 255 255 / 0.75);
-}
-
-.header-cmd {
-  color: var(--buddy-text-secondary) !important;
-}
-
-.header-theme {
-  color: var(--buddy-text-secondary) !important;
 }
 
 /* 移动端：底部 Tab（≥768px 沿用顶栏导航） */

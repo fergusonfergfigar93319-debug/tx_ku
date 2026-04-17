@@ -1,3 +1,6 @@
+/** 對應 `skinTone` 0–3 的展示膚色色卡（僅 UI；儲存仍為檔位枚舉） */
+export const Q_SKIN_SWATCHES = ['#fff1e6', '#ffd9b8', '#e8b48c', '#a8754a'] as const
+
 /** Q 版工坊 UI：快捷色板（避免界面堆满取色器） */
 export const Q_HAIR_SWATCHES = [
   '#7c3aed',
@@ -37,5 +40,5 @@ export const Q_LABELS = {
   accessory: ['小角', '王冠', '耳机', '无'],
   mouth: ['微笑', '开怀', '呆萌'],
   blush: ['无', '淡颜', '元气'],
-  frame: ['峡谷光晕', '星夜紫', '暖阳橙', '电竞赛博'],
+  frame: ['柔光氛围', '星夜紫', '暖阳橙', '赛博霓虹'],
 } as const

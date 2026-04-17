@@ -139,6 +139,12 @@
   --buddy-legendary-purple: linear-gradient(135deg, #a855f7 0%, #9333ea 50%, #7e22ce 100%);
   --buddy-epic-cyan: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%);
 
+  /* 峡谷广场：分区语义色（侧边色带、发光阴影、Chip 激活态，与 ForumView data-category 对齐） */
+  --color-recruit: #f59e0b;
+  --color-guide: #3b82f6;
+  --color-social: #ec4899;
+  --color-event: #10b981;
+
   /* 响应式断点（与 Tailwind 风格对齐，供组件 calc / media 使用） */
   --breakpoint-sm: 640px;
   --breakpoint-md: 768px;
@@ -162,11 +168,13 @@
     0 10px 25px -5px rgb(15 23 42 / 0.06),
     0 8px 10px -6px rgb(15 23 42 / 0.05);
 
-  /* 毛玻璃（顶栏 / 侧栏 / 浮层） */
-  --buddy-glass-bg: rgb(255 255 255 / 0.72);
-  --buddy-glass-blur: blur(14px) saturate(165%);
-  --buddy-glass-border: 1px solid rgb(255 255 255 / 0.38);
-  --buddy-glass-shadow: 0 8px 32px rgb(30 58 138 / 0.08);
+  /* 毛玻璃（顶栏 / 侧栏 / 浮层）— Glassmorphism 2.0：更透 + 強模糊 */
+  --buddy-glass-bg: rgb(255 255 255 / 0.75);
+  --buddy-glass-blur: blur(20px) saturate(180%);
+  --buddy-glass-border: 1px solid rgb(255 255 255 / 0.42);
+  --buddy-glass-shadow:
+    0 4px 24px rgb(15 23 42 / 0.03),
+    0 8px 32px rgb(30 58 138 / 0.06);
 
   /* 动效：时长与曲线（全站统一） */
   --buddy-duration-instant: 0.1s;
@@ -720,10 +728,12 @@ html.dark {
   --buddy-header-text: #f8fafc;
 
   --buddy-border: rgba(255, 255, 255, 0.1);
-  --buddy-glass-bg: rgba(15, 23, 42, 0.75);
-  --buddy-glass-blur: blur(16px) saturate(160%);
-  --buddy-glass-border: 1px solid rgba(255, 255, 255, 0.08);
-  --buddy-glass-shadow: 0 8px 32px rgb(0 0 0 / 0.35);
+  --buddy-glass-bg: rgba(15, 23, 42, 0.78);
+  --buddy-glass-blur: blur(20px) saturate(180%);
+  --buddy-glass-border: 1px solid rgba(255, 255, 255, 0.1);
+  --buddy-glass-shadow:
+    0 4px 28px rgb(0 0 0 / 0.4),
+    0 8px 40px rgb(0 0 0 / 0.25);
 
   /* 与毛玻璃工具类、旧引用兼容 */
   --glass-bg: rgba(15, 23, 42, 0.75);

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" aria-hidden="true">
+  <defs>
+    <radialGradient id="dcAura" cx="50%" cy="55%" r="58%">
+      <stop offset="0%" stop-color="#fbcfe8" stop-opacity="0.5"/>
+      <stop offset="55%" stop-color="#ec4899" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#831843" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="dcBody" x1="15%" y1="0%" x2="85%" y2="100%">
+      <stop offset="0%" stop-color="#fda4af"/>
+      <stop offset="35%" stop-color="#f472b6"/>
+      <stop offset="100%" stop-color="#831843"/>
+    </linearGradient>
+    <linearGradient id="dcRibbon" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#fff1f2" stop-opacity="0.95"/>
+      <stop offset="45%" stop-color="#f472b6" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#be185d" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <circle cx="200" cy="210" r="170" fill="url(#dcAura)"/>
+  <ellipse cx="200" cy="118" rx="120" ry="48" fill="url(#dcBody)" opacity="0.22" transform="rotate(-8 200 118)"/>
+  <ellipse cx="200" cy="128" rx="100" ry="40" fill="url(#dcBody)" opacity="0.18" transform="rotate(10 200 128)"/>
+  <!-- 舞姬主形 -->
+  <path fill="url(#dcBody)" d="M200 64c16-8 36 4 32 24l-12 40 58 30 46 58-42 10-18 72-48-36-44 44 6-68-68-28 54-38 36-80zm-2 10c-8 2-14 14-6 22l32 46 42 14 22-36-36-42-56-4z"/>
+  <path fill="url(#dcBody)" opacity="0.45" d="M152 200c-32 48-20 112 48 128 68-16 80-80 48-128-32 24-64 24-96 0z"/>
+  <path d="M64 176 Q12 72 156 40 T340 132" fill="none" stroke="url(#dcRibbon)" stroke-width="13" stroke-linecap="round"/>
+  <path d="M328 244 Q388 340 252 372 T72 268" fill="none" stroke="url(#dcRibbon)" stroke-width="9" stroke-linecap="round" opacity="0.88"/>
+  <circle cx="200" cy="108" r="20" fill="#fff5f7" fill-opacity="0.65"/>
+</svg>

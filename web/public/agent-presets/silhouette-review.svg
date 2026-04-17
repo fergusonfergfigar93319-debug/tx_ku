@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" aria-hidden="true">
+  <defs>
+    <linearGradient id="rvCore" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5eead4"/>
+      <stop offset="45%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#312e81"/>
+    </linearGradient>
+    <linearGradient id="rvRing" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#67e8f9" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#a78bfa" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="rvPool" cx="55%" cy="72%" r="58%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="220" cy="300" rx="140" ry="90" fill="url(#rvPool)"/>
+  <!-- ?????????? + ?????????????? -->
+  <path fill="url(#rvCore)" d="M200 52c-22 0-40 18-40 40v6c-26 8-44 32-44 60v12h-16v76h32v-64c0-14 12-26 26-26h80c14 0 26 12 26 26v64h32v-76h-16v-12c0-28-18-52-44-60v-6c0-22-18-40-40-40z"/>
+  <ellipse cx="200" cy="112" rx="34" ry="36" fill="url(#rvCore)" opacity="0.95"/>
+  <path fill="url(#rvCore)" opacity="0.55" d="M120 200h160v100c0 18-14 32-32 32h-96c-18 0-32-14-32-32V200z"/>
+  <!-- ????? -->
+  <ellipse cx="200" cy="220" rx="120" ry="48" fill="none" stroke="url(#rvRing)" stroke-width="4" opacity="0.75" transform="rotate(-12 200 220)"/>
+  <ellipse cx="200" cy="232" rx="100" ry="40" fill="none" stroke="url(#rvRing)" stroke-width="3" opacity="0.5" transform="rotate(8 200 232)"/>
+  <!-- ????????????? -->
+  <path d="M72 260 Q200 200 328 260" fill="none" stroke="url(#rvRing)" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+  <circle cx="328" cy="260" r="8" fill="#a5f3fc"/>
+  <circle cx="72" cy="260" r="6" fill="#c4b5fd"/>
+  <path d="M88 180h224" stroke="#67e8f9" stroke-opacity="0.25" stroke-width="2"/>
+  <path d="M88 200h224" stroke="#a78bfa" stroke-opacity="0.2" stroke-width="2"/>
+</svg>
