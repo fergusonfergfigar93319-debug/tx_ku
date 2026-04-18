@@ -26,6 +26,37 @@ function goFeed() {
 function goMe() {
   void router.push('/app/me')
 }
+
+/** 元流矩阵：3D 磁吸倾斜 + 玻璃内流光坐标 */
+function handleMouseMove(e: MouseEvent) {
+  const card = e.currentTarget as HTMLElement
+  if (!card) return
+
+  const rect = card.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  const y = e.clientY - rect.top
+
+  const centerX = rect.width / 2
+  const centerY = rect.height / 2
+
+  const rotateX = ((y - centerY) / centerY) * -8
+  const rotateY = ((x - centerX) / centerX) * 8
+
+  card.style.setProperty('--rx', `${rotateX}deg`)
+  card.style.setProperty('--ry', `${rotateY}deg`)
+  card.style.setProperty('--px', `${x}px`)
+  card.style.setProperty('--py', `${y}px`)
+}
+
+function handleMouseLeave(e: MouseEvent) {
+  const card = e.currentTarget as HTMLElement
+  if (!card) return
+
+  card.style.setProperty('--rx', '0deg')
+  card.style.setProperty('--ry', '0deg')
+  card.style.setProperty('--px', '-1000px')
+  card.style.setProperty('--py', '-1000px')
+}
 </script>
 
 <template>
@@ -69,6 +100,8 @@ function goMe() {
             tabindex="0"
             @click="goAgent"
             @keydown.enter.prevent="goAgent"
+            @mousemove="handleMouseMove"
+            @mouseleave="handleMouseLeave"
           >
             <div class="nova-card-glass">
               <div class="nova-icon-hub"><el-icon><ChatDotRound /></el-icon></div>
@@ -86,6 +119,8 @@ function goMe() {
             tabindex="0"
             @click="goForum"
             @keydown.enter.prevent="goForum"
+            @mousemove="handleMouseMove"
+            @mouseleave="handleMouseLeave"
           >
             <div class="nova-card-glass">
               <div class="nova-icon-hub"><el-icon><Monitor /></el-icon></div>
@@ -102,6 +137,8 @@ function goMe() {
             tabindex="0"
             @click="goFeed"
             @keydown.enter.prevent="goFeed"
+            @mousemove="handleMouseMove"
+            @mouseleave="handleMouseLeave"
           >
             <div class="nova-card-glass">
               <div class="nova-icon-hub"><el-icon><Guide /></el-icon></div>
@@ -118,6 +155,8 @@ function goMe() {
             tabindex="0"
             @click="goMe"
             @keydown.enter.prevent="goMe"
+            @mousemove="handleMouseMove"
+            @mouseleave="handleMouseLeave"
           >
             <div class="nova-card-glass">
               <div class="nova-icon-hub"><el-icon><DataLine /></el-icon></div>
@@ -437,19 +476,13 @@ function goMe() {
 .nova-carousel-stage :deep(.swiper-slide-shadow-top),
 .nova-carousel-stage :deep(.swiper-slide-shadow-bottom) { display: none !important; }
 
-/* 核心 2：优化侧边卡片的景深，解决过度模糊和发黑 */
+/* 核心 2：层级交给 HomeCardSwiper 内 .qq-card（明暗/饱和度），slide 不再整体 blur 以免发糊 */
 .nova-carousel-stage :deep(.swiper-slide) {
-  transition:
-    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
-    filter 0.6s cubic-bezier(0.22, 1, 0.36, 1) !important;
-  opacity: 0.6 !important;
-  filter: blur(2px) brightness(0.85) saturate(90%) !important;
+  transition: opacity 0.75s cubic-bezier(0.23, 1, 0.32, 1);
   pointer-events: none !important;
 }
 
 .nova-carousel-stage :deep(.swiper-slide-active) {
-  opacity: 1 !important;
-  filter: blur(0px) brightness(1.05) saturate(110%) !important;
   z-index: 20 !important;
   pointer-events: auto !important;
 }
@@ -548,16 +581,22 @@ function goMe() {
   margin: 8px 0 0 0;
 }
 
+/* ==========================================================
+   全息电竞矩阵：3D Parallax & Dynamic Glow
+   ========================================================== */
+
 .nova-bento-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(2, 180px);
   gap: 24px;
+  perspective: 1200px;
 }
 @media (max-width: 900px) {
   .nova-bento-grid {
     display: flex;
     flex-direction: column;
+    perspective: none;
   }
 }
 
@@ -566,11 +605,16 @@ function goMe() {
   border-radius: 32px;
   padding: 2px;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.03);
+  transform-style: preserve-3d;
+  transform: perspective(1200px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(1);
+  transition:
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s ease;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
 }
 .nova-bento-card:hover {
-  transform: translateY(-6px);
+  z-index: 10;
+  transform: perspective(1200px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(1.02);
 }
 
 .theme-purple {
@@ -629,23 +673,65 @@ function goMe() {
 }
 
 .nova-card-glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
   border-radius: 30px;
   height: 100%;
   padding: 32px;
   display: flex;
   flex-direction: column;
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 1);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5),
+    inset 0 24px 48px rgba(255, 255, 255, 0.2);
+  transform: translateZ(20px);
 }
+
+.nova-card-glass::before {
+  content: '';
+  position: absolute;
+  top: var(--py, -1000px);
+  left: var(--px, -1000px);
+  width: 300px;
+  height: 300px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: overlay;
+}
+
+.nova-bento-card:hover .nova-card-glass::before {
+  opacity: 1;
+}
+
 .theme-purple .nova-card-glass {
   padding: 48px 40px;
 }
 :global(html.dark) .nova-card-glass {
-  background: rgba(15, 23, 42, 0.65);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 24px 48px rgba(0, 0, 0, 0.4);
+}
+:global(html.dark) .nova-card-glass::before {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+  mix-blend-mode: screen;
+}
+
+.nova-icon-hub,
+.nova-text-hub,
+.nova-arrow {
+  position: relative;
+  z-index: 2;
+  transform: translateZ(30px);
 }
 
 .nova-icon-hub {
@@ -693,7 +779,19 @@ function goMe() {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nova-bento-card:hover,
+  .nova-bento-grid {
+    perspective: none;
+  }
+  .nova-bento-card,
+  .nova-bento-card:hover {
+    transform: none !important;
+  }
+  .nova-card-glass,
+  .nova-icon-hub,
+  .nova-text-hub,
+  .nova-arrow {
+    transform: none !important;
+  }
   .theme-purple:hover .nova-arrow {
     transform: none !important;
   }

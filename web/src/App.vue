@@ -31,7 +31,10 @@ const rootTransitionKey = computed(() => {
     <div class="route-fade-slide-wrap">
       <router-view v-slot="{ Component }">
         <transition name="fade-slide" mode="out-in">
-          <component :is="Component" :key="rootTransitionKey" />
+          <component v-if="Component" :is="Component" :key="rootTransitionKey" />
+          <div v-else key="app-route-pending" class="app-route-placeholder" role="status">
+            正在加载…
+          </div>
         </transition>
       </router-view>
     </div>
@@ -91,6 +94,15 @@ const rootTransitionKey = computed(() => {
 .app-shell > :not(.app-shell__veil) {
   position: relative;
   z-index: 1;
+}
+
+.app-route-placeholder {
+  min-height: 40vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--buddy-text-muted, #64748b);
+  font-size: 14px;
 }
 
 .mock-strip {

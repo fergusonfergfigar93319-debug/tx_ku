@@ -9,7 +9,7 @@ const RegisterView = () => import('@/views/auth/RegisterView.vue')
 const OnboardingView = () => import('@/views/onboarding/OnboardingView.vue')
 const GameInterestView = () => import('@/views/onboarding/GameInterestView.vue')
 const MainLayout = () => import('@/layouts/MainLayout.vue')
-const DiscoverView = () => import('@/views/discover/DiscoverView.vue')
+const DiscoverView = () => import('@/views/discover/DiscoverView-fixed.vue')
 const AgentView = () => import('@/views/agent/AgentView.vue')
 const AgentChatView = () => import('@/views/agent/AgentChatView.vue')
 const ForumView = () => import('@/views/forum/ForumView.vue')
@@ -155,20 +155,20 @@ function metaFlag(to: RouteLocationNormalized, key: string): boolean {
   return to.matched.some((r) => Boolean((r.meta as Record<string, unknown>)[key]))
 }
 
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (to, _from) => {
   const token = getToken()
   const user = useUserStore()
 
   if (metaFlag(to, 'public') && PUBLIC_PATHS.has(to.path)) {
-    return next()
+    return
   }
 
   if (metaFlag(to, 'guest') && token) {
-    return next({ name: 'home' })
+    return { name: 'home' }
   }
 
   if (metaFlag(to, 'requiresAuth') && !token) {
-    return next({ name: 'login', query: { redirect: to.fullPath } })
+    return { name: 'login', query: { redirect: to.fullPath } }
   }
 
   if (token && !user.profile && to.path !== '/onboarding' && to.name !== 'splash') {
@@ -181,21 +181,19 @@ router.beforeEach(async (to, _from, next) => {
 
   if (metaFlag(to, 'requiresProfile') && token) {
     if (!isProfileComplete(user.profile)) {
-      return next({ name: 'onboarding' })
+      return { name: 'onboarding' }
     }
   }
 
   if (metaFlag(to, 'requiresGameInterest') && token && isProfileComplete(user.profile)) {
     if (!user.gameInterestCompleted) {
-      return next({ name: 'game-interest' })
+      return { name: 'game-interest' }
     }
   }
 
   if (metaFlag(to, 'requiresAgentUnlock') && !user.agentChatUnlocked) {
-    return next({ name: 'agent' })
+    return { name: 'agent' }
   }
-
-  next()
 })
 
 export default router

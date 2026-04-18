@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onErrorCaptured,
+  onMounted,
+  ref,
+  watch,
+} from 'vue'
 import { useRoute, useRouter, RouterLink, type RouteLocationRaw } from 'vue-router'
 import {
   ChatDotRound,
@@ -33,6 +41,9 @@ const forum = useForumStore()
 const ui = useUiStore()
 const { module: appModule, pageSubtitle } = useAppModule()
 const drawerOpen = ref(false)
+
+/** 子页面（如版本速递）渲染抛错时展示，避免主区域整块白屏却无形提示 */
+const childRouteError = ref<string | null>(null)
 
 const searchOpen = ref(false)
 const headerQ = ref('')
@@ -112,8 +123,14 @@ watch(
   () => route.fullPath,
   () => {
     drawerOpen.value = false
+    childRouteError.value = null
   },
 )
+
+onErrorCaptured((err) => {
+  childRouteError.value = err instanceof Error ? err.message : String(err)
+  return false
+})
 
 function onGlobalKeydown(e: KeyboardEvent) {
   if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'k') return
@@ -254,10 +271,23 @@ onBeforeUnmount(() => {
     </div>
 
     <main class="main-body main-body--web-canvas main-body--app-tab app-workspace" id="main-content">
-      <div class="main-route-fade-slide-wrap">
+      <div v-if="childRouteError" class="route-child-error buddy-card-surface" role="alert">
+        <p class="route-child-error__title">当前页面渲染失败</p>
+        <p class="route-child-error__hint">
+          请打开开发者工具（F12）查看 Console 详情，或返回首页后再试。
+        </p>
+        <pre class="route-child-error__msg">{{ childRouteError }}</pre>
+        <button type="button" class="route-child-error__btn" @click="childRouteError = null; void router.go(0)">
+          重试
+        </button>
+      </div>
+      <div v-else class="main-route-fade-slide-wrap">
         <router-view v-slot="{ Component }">
           <transition name="fade-slide" mode="out-in">
-            <component :is="Component" :key="route.fullPath" />
+            <component v-if="Component" :is="Component" :key="route.fullPath" />
+            <div v-else key="route-pending" class="route-child-placeholder" role="status">
+              正在加载页面…
+            </div>
           </transition>
         </router-view>
       </div>
@@ -699,6 +729,78 @@ onBeforeUnmount(() => {
   background: var(--buddy-page-bg);
   min-height: 0;
   position: relative;
+}
+
+.route-child-placeholder {
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--buddy-text-muted);
+  font-size: 14px;
+}
+
+.route-child-error {
+  margin: 16px;
+  padding: 20px 18px;
+  border-radius: var(--buddy-radius);
+  border: 1px dashed rgb(220 38 38 / 0.45);
+  background: rgb(254 242 242 / 0.85);
+}
+
+.route-child-error__title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 800;
+  color: rgb(127 29 29);
+}
+
+.route-child-error__hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--buddy-text-muted);
+}
+
+.route-child-error__msg {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  text-align: left;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.85);
+  border: 1px solid rgb(252 165 165 / 0.45);
+  color: rgb(69 10 10);
+}
+
+.route-child-error__btn {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgb(37 99 235 / 0.4);
+  background: rgb(var(--buddy-rgb-brand) / 0.1);
+  color: var(--buddy-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.route-child-error__btn:hover {
+  background: rgb(var(--buddy-rgb-brand) / 0.16);
+}
+
+:global(html.dark) .route-child-error {
+  border-color: rgb(248 113 113 / 0.45);
+  background: rgb(30 25 25 / 0.8);
+}
+
+:global(html.dark) .route-child-error__title {
+  color: rgb(254 202 202);
+}
+
+:global(html.dark) .route-child-error__msg {
+  background: rgb(15 23 42 / 0.85);
+  border-color: rgb(185 28 28 / 0.45);
+  color: rgb(254 226 226);
 }
 
 /* 内层路由过渡：为 fade-slide 离场 position:absolute 提供定位上下文 */

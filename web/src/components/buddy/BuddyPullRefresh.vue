@@ -172,6 +172,8 @@ onBeforeUnmount(() => {
 <style scoped>
 .buddy-pull-plain {
   min-height: 0;
+  /* 避免在 grid/flex 父级下高度被压成 0，主区看起来像白屏 */
+  min-height: min(320px, 45vh);
 }
 
 .buddy-pull {

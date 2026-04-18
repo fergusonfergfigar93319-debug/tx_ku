@@ -269,9 +269,43 @@ const CATEGORY_COLOR: Record<ForumCategory, string> = {
   event: 'var(--color-event)',
 }
 
+/** Glassmorphism 2.0：分区渐变条 + 外缘柔光（与筛选 chips 色系一致） */
+const CATEGORY_GLASS: Record<
+  ForumCategory,
+  { gradient: string; shadow: string; shadowLight: string }
+> = {
+  recruit: {
+    gradient: 'linear-gradient(180deg, #f59e0b 0%, #f97316 100%)',
+    shadow: 'rgba(245, 158, 11, 0.45)',
+    shadowLight: 'rgba(245, 158, 11, 0.28)',
+  },
+  guide: {
+    gradient: 'linear-gradient(180deg, #3b82f6 0%, #2563eb 100%)',
+    shadow: 'rgba(59, 130, 246, 0.42)',
+    shadowLight: 'rgba(59, 130, 246, 0.26)',
+  },
+  social: {
+    gradient: 'linear-gradient(180deg, #ec4899 0%, #db2777 100%)',
+    shadow: 'rgba(236, 72, 153, 0.42)',
+    shadowLight: 'rgba(236, 72, 153, 0.26)',
+  },
+  event: {
+    gradient: 'linear-gradient(180deg, #10b981 0%, #059669 100%)',
+    shadow: 'rgba(16, 185, 129, 0.42)',
+    shadowLight: 'rgba(16, 185, 129, 0.26)',
+  },
+}
+
 function postCategoryStyle(p: Post): Record<string, string> {
-  const c = p.category as ForumCategory
-  return { '--category-color': CATEGORY_COLOR[c] ?? 'var(--color-social)' }
+  const raw = p.category as ForumCategory
+  const c = raw in CATEGORY_COLOR ? raw : 'social'
+  const g = CATEGORY_GLASS[c] ?? CATEGORY_GLASS.social
+  return {
+    '--category-color': CATEGORY_COLOR[c] ?? 'var(--color-social)',
+    '--category-gradient': g.gradient,
+    '--category-shadow': g.shadow,
+    '--category-shadow-light': g.shadowLight,
+  }
 }
 
 onBeforeUnmount(() => {
@@ -1530,6 +1564,13 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .cy-card:hover {
+    transform: none !important;
+  }
+  .cy-card:hover::after {
+    animation: none !important;
+    opacity: 0 !important;
+  }
   .forum .post-card.forum-post-card:hover,
   .forum-category-chip.is-active {
     transform: none !important;
@@ -1799,12 +1840,32 @@ onBeforeUnmount(() => {
   color: #94a3b8;
 }
 
+@keyframes cy-card-light-sweep {
+  0% {
+    transform: translateX(-115%) skewX(-10deg);
+  }
+  100% {
+    transform: translateX(115%) skewX(-10deg);
+  }
+}
+
 .cy-card {
   position: relative;
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.88);
+  isolation: isolate;
+  /* Base + Texture：清透底 + 微细赛博格线 */
+  background-color: rgba(255, 255, 255, 0.74);
+  background-image:
+    linear-gradient(125deg, rgba(255, 255, 255, 0.48) 0%, transparent 46%),
+    repeating-linear-gradient(
+      -18deg,
+      rgba(148, 163, 184, 0.07) 0,
+      rgba(148, 163, 184, 0.07) 1px,
+      transparent 1px,
+      transparent 21px
+    );
+  backdrop-filter: blur(36px) saturate(180%);
+  -webkit-backdrop-filter: blur(36px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.82);
   border-radius: 20px;
   padding: 22px 22px 20px;
   display: flex;
@@ -1812,31 +1873,96 @@ onBeforeUnmount(() => {
   overflow: hidden;
   cursor: pointer;
   box-shadow:
-    0 8px 28px rgba(15, 23, 42, 0.05),
-    0 1px 0 rgba(255, 255, 255, 0.75) inset;
+    0 4px 14px rgba(15, 23, 42, 0.04),
+    0 20px 48px rgba(31, 38, 135, 0.04),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.52);
   transition:
-    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
     border-color 0.35s ease,
-    background 0.35s ease;
-}
-:global(html.dark) .cy-card {
-  background: rgba(30, 41, 59, 0.5);
-  border-color: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    background-color 0.35s ease;
 }
 
-/* 悬停：克制上浮，與上方控制台同一套光感 */
-.cy-card:hover {
-  transform: translateY(-4px);
-  background: rgba(255, 255, 255, 0.94);
-  border-color: color-mix(in srgb, var(--category-color) 35%, rgba(255, 255, 255, 0.6));
-  box-shadow:
-    0 16px 40px color-mix(in srgb, var(--category-color) 14%, rgba(15, 23, 42, 0.08)),
-    0 0 0 1px color-mix(in srgb, var(--category-color) 18%, transparent) inset;
+.cy-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15%;
+  bottom: 15%;
+  width: 5px;
+  border-radius: 0 5px 5px 0;
+  background: var(
+    --category-gradient,
+    linear-gradient(180deg, var(--category-color), var(--category-color))
+  );
+  box-shadow: 0 0 18px var(--category-shadow, var(--category-color));
+  pointer-events: none;
+  z-index: 0;
+  transition: width 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
 }
+
+/* Lighting：折射扫光（悬停触发一次，不常驻打扰阅读） */
+.cy-card::after {
+  content: '';
+  position: absolute;
+  inset: -35% -50%;
+  background: linear-gradient(
+    102deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.45) 49.5%,
+    transparent 61%
+  );
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: overlay;
+}
+
+:global(html.dark) .cy-card {
+  background-color: rgba(30, 41, 59, 0.48);
+  background-image:
+    linear-gradient(125deg, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+    repeating-linear-gradient(
+      -18deg,
+      rgba(148, 163, 184, 0.12) 0,
+      rgba(148, 163, 184, 0.12) 1px,
+      transparent 1px,
+      transparent 22px
+    );
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 12px 44px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* 悬停：景深上浮 + 分区色外缘呼吸 */
+.cy-card:hover {
+  transform: translateY(-8px) scale(1.01);
+  background-color: rgba(255, 255, 255, 0.88);
+  border-color: color-mix(in srgb, var(--category-color) 34%, rgba(255, 255, 255, 0.72));
+  box-shadow:
+    0 24px 52px rgba(31, 38, 135, 0.12),
+    0 0 22px var(--category-shadow-light, rgba(59, 130, 246, 0.2)),
+    0 0 0 1px color-mix(in srgb, var(--category-color) 16%, transparent) inset;
+}
+
+.cy-card:hover::before {
+  width: 6px;
+  box-shadow: 0 0 26px var(--category-shadow, var(--category-color));
+}
+
+.cy-card:hover::after {
+  opacity: 1;
+  animation: cy-card-light-sweep 1.05s cubic-bezier(0.22, 1, 0.36, 1) 1 both;
+}
+
 :global(html.dark) .cy-card:hover {
-  background: rgba(15, 23, 42, 0.8);
+  background-color: rgba(15, 23, 42, 0.82);
+  border-color: color-mix(in srgb, var(--category-color) 38%, rgba(255, 255, 255, 0.08));
+  box-shadow:
+    0 28px 64px rgba(0, 0, 0, 0.72),
+    0 0 28px var(--category-shadow-light, rgba(59, 130, 246, 0.15)),
+    0 0 0 1px color-mix(in srgb, var(--category-color) 14%, transparent) inset;
 }
 
 /* 灵魂设计：内部环境光球 (Ambient Orb) */
@@ -2089,6 +2215,10 @@ onBeforeUnmount(() => {
 .cy-card--skeleton {
   pointer-events: none;
   min-height: 220px;
+}
+.cy-card--skeleton::before,
+.cy-card--skeleton::after {
+  display: none;
 }
 .cy-card--skeleton :deep(.el-skeleton__item) {
   background: linear-gradient(

@@ -32,7 +32,7 @@ const route = useRoute()
 const tab = ref<'news' | 'rec'>('news')
 const news = ref<NewsItem[]>([])
 const recs = ref<RecommendationItem[]>([])
-const loading = ref(false)
+const loading = ref(true)
 const page = ref(1)
 const recError = ref(false)
 const gameFilter = ref<'all' | 'honor_of_kings' | 'honor_esports'>('all')
@@ -187,11 +187,44 @@ function applyTrendingSearch(label: string) {
   newsSearchQuery.value = label
 }
 
+/** 避免后端缺字段导致渲染期抛错（如 nickname 缺失时 .slice） */
+function normalizeNewsItem(n: NewsItem, index: number): NewsItem {
+  return {
+    ...n,
+    id: n.id != null && String(n.id).length ? String(n.id) : `news-${index}`,
+    title: n.title?.trim() || '未命名资讯',
+  }
+}
+
+function normalizeRecommendationItem(raw: RecommendationItem, index: number): RecommendationItem {
+  const card = raw.card
+    ? {
+        ...raw.card,
+        tags: Array.isArray(raw.card.tags)
+          ? raw.card.tags.filter((t): t is string => typeof t === 'string')
+          : [],
+      }
+    : raw.card
+  return {
+    ...raw,
+    userId:
+      raw.userId != null && String(raw.userId).length ? String(raw.userId) : `rec-unknown-${index}`,
+    nickname: raw.nickname?.trim() || '搭子',
+    matchScore: Number.isFinite(raw.matchScore) ? raw.matchScore : 0,
+    matchReasons: Array.isArray(raw.matchReasons) ? raw.matchReasons : [],
+    card,
+  }
+}
+
 async function loadNews() {
   loading.value = true
   try {
     const r = await feedApi.getNewsFeed({ page: page.value })
-    news.value = r.list
+    const list = Array.isArray(r.list) ? r.list : []
+    news.value = list.map(normalizeNewsItem)
+    touchSyncHint()
+  } catch {
+    news.value = []
     touchSyncHint()
   } finally {
     loading.value = false
@@ -203,7 +236,8 @@ async function loadRecs() {
   recError.value = false
   try {
     const r = await recApi.getRecommendations({ page: page.value, size: 10 })
-    recs.value = r.list
+    const list = Array.isArray(r.list) ? r.list : []
+    recs.value = list.map(normalizeRecommendationItem)
     touchSyncHint()
   } catch {
     recs.value = []
@@ -248,6 +282,33 @@ onBeforeUnmount(() => {
 async function pullRefresh() {
   if (tab.value === 'news') await loadNews()
   else await loadRecs()
+}
+
+/** 资讯 / 推荐卡：3D 磁吸倾斜 + 流光坐标（--rx/--ry/--px/--py） */
+function handleMouseMove(e: MouseEvent) {
+  const card = e.currentTarget as HTMLElement
+  if (!card) return
+  const rect = card.getBoundingClientRect()
+  if (rect.width < 2 || rect.height < 2) return
+  const x = e.clientX - rect.left
+  const y = e.clientY - rect.top
+  const centerX = rect.width / 2
+  const centerY = rect.height / 2
+  const rotateX = ((y - centerY) / Math.max(centerY, 1e-6)) * -6
+  const rotateY = ((x - centerX) / Math.max(centerX, 1e-6)) * 6
+  card.style.setProperty('--rx', `${rotateX}deg`)
+  card.style.setProperty('--ry', `${rotateY}deg`)
+  card.style.setProperty('--px', `${x}px`)
+  card.style.setProperty('--py', `${y}px`)
+}
+
+function handleMouseLeave(e: MouseEvent) {
+  const card = e.currentTarget as HTMLElement
+  if (!card) return
+  card.style.setProperty('--rx', '0deg')
+  card.style.setProperty('--ry', '0deg')
+  card.style.setProperty('--px', '-1000px')
+  card.style.setProperty('--py', '-1000px')
 }
 </script>
 
@@ -519,6 +580,8 @@ async function pullRefresh() {
               :key="n.id"
               class="feed-item news-item buddy-card-surface"
               :class="['news-item--tone-' + (idx % 4), n.coverUrl ? 'news-item--has-cover' : 'news-item--no-cover']"
+              @mousemove="handleMouseMove"
+              @mouseleave="handleMouseLeave"
             >
               <div v-if="n.coverUrl" class="news-item__media">
                 <img :src="n.coverUrl" alt="" loading="lazy" />
@@ -625,11 +688,15 @@ async function pullRefresh() {
               class="item rec-card recommendation-card buddy-card-surface is-interactive"
               :class="'rec-card--tone-' + (idx % 3)"
               shadow="never"
+              @mousemove="handleMouseMove"
+              @mouseleave="handleMouseLeave"
             >
               <div class="rec-card__accent" aria-hidden="true" />
               <div class="rec-top">
                 <div class="rec-avatar-wrap">
-                  <el-avatar :size="54" :src="r.avatarUrl || undefined">{{ r.nickname.slice(0, 1) }}</el-avatar>
+                  <el-avatar :size="54" :src="r.avatarUrl || undefined">
+                    {{ (r.nickname || '?').slice(0, 1) }}
+                  </el-avatar>
                 </div>
                 <div class="rec-meta">
                   <div class="name-row">
@@ -2097,25 +2164,22 @@ async function pullRefresh() {
   }
 }
 
-/* 列表区块切换动效 */
+/* 列表区块切换动效（不使用 filter: blur，部分 GPU/浏览器下易导致整块内容不可见） */
 .discover-feed-tab-enter-active,
 .discover-feed-tab-leave-active {
   transition:
     opacity 0.32s var(--buddy-ease-out, ease),
-    transform 0.38s cubic-bezier(0.33, 0.9, 0.32, 1),
-    filter 0.32s ease;
+    transform 0.38s cubic-bezier(0.33, 0.9, 0.32, 1);
 }
 
 .discover-feed-tab-enter-from {
   opacity: 0;
   transform: translateY(10px);
-  filter: blur(6px);
 }
 
 .discover-feed-tab-leave-to {
   opacity: 0;
   transform: translateY(-6px);
-  filter: blur(3px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2543,36 +2607,39 @@ async function pullRefresh() {
 }
 
 /* ==========================================================
-   1. 沉浸式全局背景 (与首頁一致的 Deep Space)
+   1. 深空底座 + 赛博网格（Glassmorphism 2.0）
    ========================================================== */
 .feed-view {
   min-height: 100vh;
   box-sizing: border-box;
-  transition: background 0.6s ease;
   padding-bottom: 40px;
+  position: relative;
+  transition: background 0.6s ease;
 }
 
 :global(html:not(.dark)) .feed-view {
-  background: linear-gradient(
-    180deg,
-    #0f172a 0%,
-    #1e293b 150px,
-    #f8fafc 300px,
-    var(--buddy-page-bg) 100%
-  );
+  background:
+    radial-gradient(ellipse 100% 400px at 50% 0%, rgba(37, 99, 235, 0.06) 0%, transparent 100%),
+    linear-gradient(rgba(15, 23, 42, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.02) 1px, transparent 1px),
+    linear-gradient(180deg, #f1f5f9 0%, #f8fafc 100%);
+  background-size: 100% 100%, 32px 32px, 32px 32px, 100% 100%;
 }
 
 :global(html.dark) .feed-view {
   background:
-    radial-gradient(ellipse 100% 400px at 50% 0%, rgba(59, 130, 246, 0.1) 0%, transparent 100%),
+    radial-gradient(ellipse 100% 500px at 50% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 100%),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(180deg, #0f172a 0%, #020617 100%);
+  background-size: 100% 100%, 32px 32px, 32px 32px, 100% 100%;
 }
 
 /* ==========================================================
-   2. 粉碎原有的 B 端列表外壳，释放独立卡片
+   2. 仅推荐卡 el-card：去掉默认灰盒（勿动 .app-layer，避免主频道条被抹平）
+       不在 .list 上使用 perspective：与 v-loading 遮罩叠加可能异常铺满视口
    ========================================================== */
-:global(.feed-view .el-card),
-:global(.feed-view .app-layer) {
+:global(.feed-view .rec-card.el-card) {
   background: transparent !important;
   background-color: transparent !important;
   border: none !important;
@@ -2581,90 +2648,155 @@ async function pullRefresh() {
   -webkit-backdrop-filter: none !important;
 }
 
-:global(.feed-view .el-card__body),
-:global(.feed-view .app-layer__inner) {
+:global(.feed-view .rec-card .el-card__body) {
   padding: 0 !important;
 }
 
-/* 加大资讯列表的间距 */
-:global(.feed-view .list.list--news) {
-  gap: 20px !important;
+:global(.feed-view .list) {
+  gap: 24px !important;
 }
 
 /* ==========================================================
-   3. 资讯卡片：便当盒重构 (Neon Bento Card)
+   3. 资讯卡 + 推荐卡：3D 玻璃便当盒 + 动态流光层
    ========================================================== */
-/* 强制覆盖原有的 .news-item 和 .buddy-card-surface */
 :global(.feed-view .feed-item),
 :global(.feed-view .news-item) {
   margin-bottom: 0 !important;
-  border-radius: 20px !important;
-  padding: 0 !important; /* 让内部图片可以贴边 */
+  border-radius: 24px !important;
+  padding: 0 !important;
   position: relative;
   overflow: hidden;
-  border-left: none !important; /* 彻底删掉原来的左侧彩色竖线 */
-  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease !important;
+  border-left: none !important;
+  isolation: isolate;
+  /* flat：避免 backdrop-filter + preserve-3d 在部分环境下白屏/图层异常 */
+  transform-style: flat;
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0);
+  transition:
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s ease !important;
   cursor: pointer;
 }
 
-/* 亮色模式下的卡片质感 */
-:global(html:not(.dark)) .feed-view .feed-item {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.8) 100%) !important;
-  backdrop-filter: blur(24px) saturate(150%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.9) !important;
-  border-bottom-color: rgba(226, 232, 240, 0.6) !important;
-  box-shadow:
-    0 12px 28px -6px rgba(15, 23, 42, 0.05),
-    0 0 0 1px rgba(255, 255, 255, 0.5) inset !important;
+:global(.feed-view .rec-card.el-card) {
+  margin-bottom: 0 !important;
+  border-radius: 24px !important;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transform-style: flat;
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0);
+  transition:
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s ease !important;
+  cursor: pointer;
 }
 
-/* 暗黑模式下的霓虹霜化玻璃 */
-:global(html.dark) .feed-view .feed-item {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
-  backdrop-filter: blur(24px) saturate(200%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-top-color: rgba(255, 255, 255, 0.2) !important;
+:global(html:not(.dark)) .feed-view .feed-item,
+:global(html:not(.dark)) .feed-view .rec-card.el-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(248, 250, 252, 0.6) 100%) !important;
+  backdrop-filter: blur(28px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
   box-shadow:
-    0 16px 32px -8px rgba(0, 0, 0, 0.8),
-    0 0 20px rgba(59, 130, 246, 0.05),
-    0 1px 1px rgba(255, 255, 255, 0.15) inset !important;
+    0 16px 36px -10px rgba(15, 23, 42, 0.06),
+    inset 0 1px 1px rgba(255, 255, 255, 1) !important;
+}
+
+:global(html.dark) .feed-view .feed-item,
+:global(html.dark) .feed-view .rec-card.el-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow:
+    0 20px 48px -12px rgba(0, 0, 0, 0.8),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
   color: #f8fafc !important;
 }
 
-/* 增加卡片内部文本区的内边距，让排版更大气 */
-:global(.feed-view .feed-item .news-item__body) {
-  padding: 22px 24px 24px !important;
+/* 流光扫掠：置于内容下方，避免压住正文 */
+:global(.feed-view .feed-item::after),
+:global(.feed-view .rec-card.el-card::after) {
+  content: '';
+  position: absolute;
+  top: var(--py, -1000px);
+  left: var(--px, -1000px);
+  width: 400px;
+  height: 400px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
 }
 
-/* 修复图片在暗黑模式下的圆角和边框 */
+:global(html:not(.dark)) .feed-view .feed-item::after,
+:global(html:not(.dark)) .feed-view .rec-card.el-card::after {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 60%);
+  mix-blend-mode: overlay;
+}
+
+:global(html.dark) .feed-view .feed-item::after,
+:global(html.dark) .feed-view .rec-card.el-card::after {
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.15) 0%, transparent 60%);
+  mix-blend-mode: screen;
+}
+
+:global(.feed-view .feed-item:hover::after),
+:global(.feed-view .rec-card.el-card:hover::after) {
+  opacity: 1;
+}
+
+:global(.feed-view .feed-item .news-item__body) {
+  padding: 22px 24px 24px !important;
+  transform: translateZ(20px);
+  position: relative;
+  z-index: 2;
+}
+
+:global(.feed-view .rec-card .rec-top),
+:global(.feed-view .rec-card .rec-reason-block),
+:global(.feed-view .rec-card .tags) {
+  transform: translateZ(20px);
+  position: relative;
+  z-index: 2;
+}
+
 :global(.feed-view .feed-item .news-item__media) {
   border-right: 1px solid rgba(15, 23, 42, 0.05);
+  z-index: 2;
+  position: relative;
+}
+:global(.feed-view .feed-item .news-item__visual) {
+  z-index: 2;
+  position: relative;
 }
 :global(html.dark) .feed-view .feed-item .news-item__media {
   border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* ==========================================================
-   4. 磁悬浮 Hover 交互 (Magnetic Hover)
-   ========================================================== */
-:global(.feed-view .feed-item:hover) {
-  transform: translateY(-4px) scale(1.01) !important;
-  z-index: 10;
+/* Hover：由 3D 倾斜承担位移，仅加深光感与层级 */
+:global(.feed-view .feed-item:hover),
+:global(.feed-view .rec-card.el-card:hover) {
+  z-index: 20;
 }
 
-:global(html:not(.dark)) .feed-view .feed-item:hover {
+:global(html:not(.dark)) .feed-view .feed-item:hover,
+:global(html:not(.dark)) .feed-view .rec-card.el-card:hover {
   box-shadow:
-    0 24px 48px -12px rgba(37, 99, 235, 0.08),
-    0 8px 16px rgba(15, 23, 42, 0.03),
-    0 0 0 1px rgba(255, 255, 255, 1) inset !important;
+    0 24px 56px -12px rgba(37, 99, 235, 0.12),
+    0 8px 16px rgba(15, 23, 42, 0.04),
+    inset 0 1px 1px rgba(255, 255, 255, 1) !important;
 }
 
-:global(html.dark) .feed-view .feed-item:hover {
-  border-color: rgba(96, 165, 250, 0.5) !important;
+:global(html.dark) .feed-view .feed-item:hover,
+:global(html.dark) .feed-view .rec-card.el-card:hover {
+  border-color: rgba(96, 165, 250, 0.4) !important;
   box-shadow:
-    0 24px 48px -12px rgba(0, 0, 0, 0.9),
-    0 0 36px rgba(59, 130, 246, 0.25),
-    0 1px 1px rgba(255, 255, 255, 0.3) inset !important;
+    0 32px 64px -12px rgba(0, 0, 0, 0.9),
+    0 0 48px rgba(59, 130, 246, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
 }
 
 /* ==========================================================
@@ -2762,9 +2894,15 @@ async function pullRefresh() {
 
 @media (prefers-reduced-motion: reduce) {
   :global(.feed-view .feed-item),
-  :global(.feed-view .feed-item:hover) {
+  :global(.feed-view .feed-item:hover),
+  :global(.feed-view .rec-card.el-card),
+  :global(.feed-view .rec-card.el-card:hover) {
     transform: none !important;
     transition: none !important;
+  }
+  :global(.feed-view .feed-item::after),
+  :global(.feed-view .rec-card.el-card::after) {
+    opacity: 0 !important;
   }
 }
 </style>

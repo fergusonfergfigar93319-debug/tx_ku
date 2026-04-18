@@ -108,15 +108,21 @@ const displayTags = computed(() => {
 }
 
 .agent-preset-card[data-hero='luna'] {
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%) !important;
+  background-image:
+    repeating-linear-gradient(118deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 26px),
+    linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%) !important;
 }
 
 .agent-preset-card[data-hero='diaochan'] {
-  background: linear-gradient(135deg, #831843 0%, #db2777 50%, #f472b6 100%) !important;
+  background-image:
+    repeating-linear-gradient(118deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 26px),
+    linear-gradient(135deg, #831843 0%, #db2777 50%, #f472b6 100%) !important;
 }
 
 .agent-preset-card[data-hero='default'] {
-  background: linear-gradient(135deg, #374151 0%, #1f2937 50%, #111827 100%) !important;
+  background-image:
+    repeating-linear-gradient(118deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 26px),
+    linear-gradient(135deg, #374151 0%, #1f2937 50%, #111827 100%) !important;
 }
 
 .agent-preset-card::before {
@@ -130,6 +136,8 @@ const displayTags = computed(() => {
   background-size: contain;
   background-repeat: no-repeat;
   background-position: bottom right;
+  transform: translateZ(22px) rotate(0deg);
+  transform-style: preserve-3d;
   /* 內建漸層 SVG：略提不透明度 + 飽和，避免變灰塊 */
   opacity: 0.66;
   filter: saturate(1.15) contrast(1.04) drop-shadow(0 10px 32px rgba(0, 0, 0, 0.28))
@@ -186,7 +194,7 @@ const displayTags = computed(() => {
 }
 
 .agent-preset-card:hover:not(.is-disabled)::before {
-  transform: scale(1.06) rotate(4deg);
+  transform: translateZ(52px) scale(1.1) rotate(4deg);
   opacity: 0.82;
   filter: saturate(1.22) contrast(1.06) drop-shadow(0 14px 40px rgba(0, 0, 0, 0.32))
     drop-shadow(0 0 36px rgba(255, 255, 255, 0.18));
@@ -261,7 +269,8 @@ const displayTags = computed(() => {
     transform: none;
   }
   .agent-preset-card:hover:not(.is-disabled)::before {
-    transform: none;
+    transform: translateZ(0) scale(1) rotate(0deg);
+    opacity: 0.66;
   }
 }
 </style>
