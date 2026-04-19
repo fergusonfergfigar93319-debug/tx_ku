@@ -1,702 +1,746 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Edit, Guide, House, Monitor, User } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import {
+  Avatar,
+  ArrowRight,
+  Connection,
+  Document,
+  Edit,
+  Medal,
+} from '@element-plus/icons-vue'
+import * as postsApi from '@/api/posts'
 
 const router = useRouter()
 const user = useUserStore()
 
-const activeTab = ref<'posts' | 'cards'>('posts')
+const myPostsTotal = ref(0)
 
-/** 關係與獲贊：後端擴展 Profile 後可改為真實欄位 */
 const statFollowing = computed(() => 0)
 const statFollowers = computed(() => 0)
-const statLikes = computed(() => 0)
 
-const avatarSrc = computed(
-  () => user.profile?.avatarUrl || '/forum/avatars/a01.svg'
-)
+const displayNickname = computed(() => user.profile?.nickname || '未命名玩家')
 
-function goToEdit() {
-  void router.push({ name: 'profile-edit' })
+const avatarSrc = computed(() => user.profile?.avatarUrl || undefined)
+
+const hasGameIdentity = computed(() => {
+  const p = user.profile
+  if (!p) return false
+  return Boolean((p.rank && p.rank.trim()) || (p.mainRoles?.length ?? 0) > 0)
+})
+
+const hasInterestRadar = computed(() => {
+  const p = user.profile
+  if (!p) return false
+  return Boolean((p.preferredGames?.length ?? 0) > 0 || (p.gameIds?.length ?? 0) > 0)
+})
+
+const buddyPreview = computed(() => {
+  const c = user.buddyCard
+  if (!c) return ''
+  const head = c.declaration?.trim() || c.tags?.slice(0, 2).join(' · ') || ''
+  return head
+})
+
+onMounted(async () => {
+  if (!user.profile) {
+    await user.fetchProfile()
+  }
+  try {
+    const r = await postsApi.getMyPosts({ page: 1 })
+    myPostsTotal.value = r.total ?? r.list.length
+  } catch {
+    myPostsTotal.value = 0
+  }
+})
+
+const goProfileEdit = () => void router.push({ name: 'profile-edit' })
+const goGameInterest = () => void router.push({ name: 'game-interest' })
+const goMyPosts = () => void router.push({ name: 'my-posts' })
+const goFollowing = () => void router.push({ name: 'following' })
+const goForum = () => void router.push({ name: 'forum' })
+
+function handleMouseMove(e: MouseEvent) {
+  const card = e.currentTarget as HTMLElement
+  if (!card) return
+  const rect = card.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  const y = e.clientY - rect.top
+  const centerX = rect.width / 2
+  const centerY = rect.height / 2
+  const rotateX = ((y - centerY) / centerY) * -3
+  const rotateY = ((x - centerX) / centerX) * 3
+
+  card.style.setProperty('--rx', `${rotateX}deg`)
+  card.style.setProperty('--ry', `${rotateY}deg`)
+  card.style.setProperty('--px', `${x}px`)
+  card.style.setProperty('--py', `${y}px`)
+}
+
+function handleMouseLeave(e: MouseEvent) {
+  const card = e.currentTarget as HTMLElement
+  if (!card) return
+  card.style.setProperty('--rx', `0deg`)
+  card.style.setProperty('--ry', `0deg`)
+  card.style.setProperty('--px', `-1000px`)
 }
 </script>
 
 <template>
-  <div class="gl-page-wrapper">
-    <div class="gl-ambient-orb orb-1"></div>
-    <div class="gl-ambient-orb orb-2"></div>
+  <div class="profile-daylight-layout app-page-stack">
+    <div class="ambient-glow" aria-hidden="true"></div>
 
-    <div class="gl-container">
-      <header class="gl-hero">
-        <div class="gl-hero-foil"></div>
-        <div class="gl-hero-glass">
-          <div class="gl-avatar-zone">
-            <div class="gl-avatar-ring"></div>
-            <img class="gl-avatar" :src="avatarSrc" alt="头像" />
-          </div>
-
-          <div class="gl-info-zone">
-            <div class="gl-name-row">
-              <h1 id="me-page-title" class="gl-name">{{ user.profile?.nickname || '峡谷超神者' }}</h1>
-              <span class="gl-badge bg-gradient-amber">Lv.3</span>
-              <span class="gl-badge bg-glass-purple">BETA 创世者</span>
-            </div>
-            <p class="gl-uid">ID: {{ user.account?.email || 'dev@local.test' }}</p>
-
-            <div class="gl-stats-bar">
-              <div class="gl-stat">
-                <span class="gl-stat-val text-gradient-blue">{{ statFollowing }}</span>
-                <span class="gl-stat-label">关注</span>
-              </div>
-              <div class="gl-divider"></div>
-              <div class="gl-stat">
-                <span class="gl-stat-val text-gradient-purple">{{ statFollowers }}</span>
-                <span class="gl-stat-label">粉丝</span>
-              </div>
-              <div class="gl-divider"></div>
-              <div class="gl-stat">
-                <span class="gl-stat-val text-gradient-cyan">{{ statLikes }}</span>
-                <span class="gl-stat-label">获赞</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="gl-action-zone">
-            <button type="button" class="gl-btn-edit" @click="goToEdit">
-              <el-icon><Edit /></el-icon> 编辑档案
-            </button>
-          </div>
-        </div>
+    <div class="profile-container">
+      <header class="profile-header">
+        <h1 class="page-title">元流档案</h1>
+        <p class="page-desc">检视你的高阶数字身份、游戏名片与元流关系网</p>
       </header>
 
-      <section class="gl-dashboard">
-        <div class="gl-card gl-assets-card">
-          <div class="gl-card-header">
-            <h3 class="gl-card-title">电竞生涯资产</h3>
-            <span class="gl-live-tag">LIVE 更新</span>
-          </div>
-
-          <div class="gl-rank-row">
-            <div class="gl-rank-icon">👑</div>
-            <div class="gl-rank-info">
-              <div class="gl-rank-name text-gradient-gold">最强王者</div>
-              <div class="gl-rank-sub">25 星 · 巅峰 1850</div>
+      <section
+        class="hero-id-card glass-panel"
+        @mousemove="handleMouseMove"
+        @mouseleave="handleMouseLeave"
+      >
+        <div class="hero-aurora" aria-hidden="true"></div>
+        <div class="id-card-content">
+          <div class="avatar-section">
+            <div class="avatar-ring">
+              <el-avatar :size="88" :src="avatarSrc" class="user-avatar">
+                <el-icon :size="40"><Avatar /></el-icon>
+              </el-avatar>
             </div>
-          </div>
-
-          <div class="gl-data-grid">
-            <div class="gl-data-item">
-              <span class="gl-data-num">68.5%</span>
-              <span class="gl-data-desc">综合胜率</span>
-            </div>
-            <div class="gl-data-item">
-              <span class="gl-data-num">82.4</span>
-              <span class="gl-data-desc">场均评分</span>
-            </div>
-            <div class="gl-data-item">
-              <div class="gl-tags">
-                <span class="gl-mini-tag">打野</span>
-                <span class="gl-mini-tag">刺客</span>
+            <div class="user-info">
+              <h2 class="user-name">{{ displayNickname }}</h2>
+              <div class="user-badges">
+                <span class="badge level-badge">LV.1 见习</span>
+                <span class="badge team-badge">暂无战队</span>
               </div>
-              <span class="gl-data-desc">本命分路</span>
             </div>
           </div>
-        </div>
 
-        <div class="gl-card gl-modules-card">
-          <h3 class="gl-card-title">战术终端</h3>
-          <div class="gl-bento-grid">
-            <div class="gl-bento-item" @click="router.push('/app/home')">
-              <div class="gl-b-icon bg-gradient-blue"><el-icon><House /></el-icon></div>
-              <span class="gl-b-text">指挥中心</span>
-            </div>
-            <div class="gl-bento-item" @click="router.push('/app/feed')">
-              <div class="gl-b-icon bg-gradient-purple"><el-icon><Guide /></el-icon></div>
-              <span class="gl-b-text">情报速递</span>
-            </div>
-            <div class="gl-bento-item" @click="goToEdit">
-              <div class="gl-b-icon bg-gradient-cyan"><el-icon><User /></el-icon></div>
-              <span class="gl-b-text">身份密钥</span>
-            </div>
-            <div class="gl-bento-item" @click="router.push('/app/forum')">
-              <div class="gl-b-icon bg-gradient-orange"><el-icon><Monitor /></el-icon></div>
-              <span class="gl-b-text">元流矩阵</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="gl-feed-section">
-        <nav class="gl-tabs" aria-label="档案分区">
-          <button
-            type="button"
-            class="gl-tab"
-            :class="{ 'is-active': activeTab === 'posts' }"
-            @click="activeTab = 'posts'"
-          >
-            输出日志 (我的帖子)
-          </button>
-          <button
-            type="button"
-            class="gl-tab"
-            :class="{ 'is-active': activeTab === 'cards' }"
-            @click="activeTab = 'cards'"
-          >
-            共识协议 (我的卡片)
-          </button>
-        </nav>
-
-        <div class="gl-feed-content">
-          <div class="gl-empty-state">
-            <div class="gl-empty-icon">✨</div>
-            <p class="gl-empty-text">系统日志暂无数据。前往矩阵中心发布你的第一份协议吧。</p>
-            <button type="button" class="gl-btn-primary" @click="router.push('/app/forum')">
-              建立连接
+          <div class="stats-section">
+            <button type="button" class="stat-box" @click="goFollowing">
+              <span class="stat-num">{{ statFollowing }}</span>
+              <span class="stat-label">关注</span>
+            </button>
+            <div class="stat-divider" aria-hidden="true"></div>
+            <button type="button" class="stat-box" @click="goFollowing">
+              <span class="stat-num">{{ statFollowers }}</span>
+              <span class="stat-label">粉丝</span>
+            </button>
+            <button type="button" class="btn-edit-profile" @click.stop="goProfileEdit">
+              <el-icon><Edit /></el-icon>
+              编辑基础档案
             </button>
           </div>
         </div>
       </section>
+
+      <div class="bento-grid">
+        <div
+          class="bento-card bento-game-card glass-panel"
+          @mousemove="handleMouseMove"
+          @mouseleave="handleMouseLeave"
+        >
+          <div class="bento-header">
+            <div class="bento-title"><el-icon><Medal /></el-icon> 游戏名片</div>
+            <button type="button" class="bento-action" @click.stop="goProfileEdit">
+              配置 <el-icon><ArrowRight /></el-icon>
+            </button>
+          </div>
+          <div class="bento-body">
+            <div v-if="hasGameIdentity" class="game-identity">
+              <p v-if="user.profile?.rank" class="identity-rank">{{ user.profile.rank }}</p>
+              <div v-if="user.profile?.mainRoles?.length" class="role-chips">
+                <span v-for="role in user.profile.mainRoles" :key="role" class="role-chip">{{ role }}</span>
+              </div>
+            </div>
+            <div v-else class="empty-hint">
+              <span class="hint-icon">🎮</span>
+              <p>尚未绑定游戏大区</p>
+              <button type="button" class="btn-ghost" @click.stop="goProfileEdit">立即绑定同步战绩</button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="bento-card bento-interest-card glass-panel is-clickable"
+          @mousemove="handleMouseMove"
+          @mouseleave="handleMouseLeave"
+          @click="goGameInterest"
+        >
+          <div class="bento-header">
+            <div class="bento-title"><el-icon><Document /></el-icon> 电竞偏好</div>
+          </div>
+          <div class="bento-body">
+            <div v-if="hasInterestRadar" class="interest-preview">
+              <p v-if="user.profile?.preferredGames?.length" class="interest-line">
+                {{ user.profile.preferredGames.slice(0, 4).join(' · ') }}
+              </p>
+              <p v-else-if="user.profile?.gameIds?.length" class="interest-line">
+                已选 {{ user.profile.gameIds.length }} 款关注游戏
+              </p>
+              <span class="text-link">调整偏好 ➝</span>
+            </div>
+            <div v-else class="empty-hint">
+              <span class="hint-icon">🎯</span>
+              <p>未设置偏好雷达</p>
+              <span class="text-link">去设置 ➝</span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="bento-card bento-buddy-card glass-panel"
+          @mousemove="handleMouseMove"
+          @mouseleave="handleMouseLeave"
+        >
+          <div class="bento-header">
+            <div class="bento-title"><el-icon><Connection /></el-icon> 搭子关系</div>
+          </div>
+          <div class="bento-body">
+            <p v-if="buddyPreview" class="buddy-snippet">{{ buddyPreview }}</p>
+            <div v-else class="buddy-list-empty">
+              你目前还没有绑定的游戏搭子，前往 <strong @click.stop="goForum">峡谷广场</strong> 或
+              <strong>推荐列表</strong> 结识新朋友吧。
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="bento-card bento-post-card glass-panel is-clickable"
+          @mousemove="handleMouseMove"
+          @mouseleave="handleMouseLeave"
+          @click="goMyPosts"
+        >
+          <div class="bento-header">
+            <div class="bento-title"><el-icon><Document /></el-icon> 动态轨迹</div>
+          </div>
+          <div class="bento-body stats-huge">
+            <span class="huge-num">{{ myPostsTotal }}</span>
+            <span class="huge-label">条历史发布</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 /* ==========================================================
-   GLOSSY LIGHT (极昼幻彩玻璃态) - 高端亮色电竞风
+   1. 基础布局与明亮背景 (Daylight Base)
    ========================================================== */
-
-/* --- 页面级环境与背景 --- */
-.gl-page-wrapper {
-  position: relative;
+.profile-daylight-layout {
   min-height: 100vh;
-  box-sizing: border-box;
+  background-color: #f8fafc;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+  position: relative;
+  padding: 40px 5%;
   padding-bottom: 72px;
-  background: #f4f7f9; /* 极其干净的极地灰白 */
-  overflow-x: hidden;
-  font-family: 'Inter', system-ui, sans-serif;
+  box-sizing: border-box;
 }
 
-/* 环境弥散光球：营造呼吸感，拒绝死白 */
-.gl-ambient-orb {
+.ambient-glow {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.5;
+  top: 0;
+  left: 20%;
+  width: 60%;
+  height: 400px;
+  background: radial-gradient(ellipse at top, rgba(245, 158, 11, 0.15), transparent 70%);
+  filter: blur(60px);
   pointer-events: none;
   z-index: 0;
 }
-.orb-1 {
-  top: -10%;
-  left: -5%;
-  width: 50vw;
-  height: 50vw;
-  background: rgba(124, 58, 237, 0.15);
-  animation: float 10s ease-in-out infinite;
-}
-.orb-2 {
-  bottom: 20%;
-  right: -10%;
-  width: 40vw;
-  height: 40vw;
-  background: rgba(56, 189, 248, 0.15);
-  animation: float 12s ease-in-out infinite reverse;
-}
-@keyframes float {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  50% {
-    transform: translate(5%, 5%);
-  }
-}
 
-.gl-container {
-  position: relative;
-  z-index: 10;
+.profile-container {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 40px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-
-/* --- 1. 全息幻彩横幅 (Hero Banner) --- */
-.gl-hero {
-  position: relative;
-  border-radius: 32px;
-  padding: 2px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.4));
-  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.05);
-  overflow: hidden;
-}
-
-/* 镭射全息箔片质感 */
-.gl-hero-foil {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
-  opacity: 0.15;
-  z-index: 0;
-}
-
-.gl-hero-glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(40px) saturate(200%);
-  border-radius: 30px;
-  padding: 40px 48px;
   position: relative;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
-/* 头像组 */
-.gl-avatar-zone {
-  position: relative;
-  width: 112px;
-  height: 112px;
-  flex-shrink: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.profile-header {
+  margin-bottom: 32px;
 }
-.gl-avatar-ring {
-  position: absolute;
-  inset: -6px;
-  border-radius: 50%;
-  /* 炫彩旋转边框 */
-  background: conic-gradient(from 0deg, #38bdf8, #818cf8, #c084fc, #38bdf8);
-  animation: gl-spin 4s linear infinite;
-  filter: blur(3px);
-  opacity: 0.8;
-}
-.gl-avatar {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid #fff;
-  z-index: 2;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-}
-@keyframes gl-spin {
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-/* 信息区 (深色字体保证可读性) */
-.gl-info-zone {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-}
-.gl-name-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.gl-name {
-  margin: 0;
+.page-title {
   font-size: 32px;
   font-weight: 900;
   color: #0f172a;
+  margin: 0 0 8px;
   letter-spacing: 0.5px;
 }
-
-/* 渐变与磨砂徽章 */
-.gl-badge {
-  padding: 4px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.5px;
-}
-.bg-gradient-amber {
-  background: linear-gradient(135deg, #f59e0b, #fbbf24);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
-}
-.bg-glass-purple {
-  background: rgba(124, 58, 237, 0.1);
-  color: #7c3aed;
-  border: 1px solid rgba(124, 58, 237, 0.2);
-  backdrop-filter: blur(8px);
-}
-.gl-uid {
-  margin: 0;
-  font-size: 14px;
-  color: #64748b;
-  font-family: monospace;
-}
-
-/* 渐变数据条 */
-.gl-stats-bar {
-  display: inline-flex;
-  align-items: center;
-  gap: 20px;
-  margin-top: 8px;
-  background: rgba(255, 255, 255, 0.6);
-  padding: 12px 24px;
-  border-radius: 16px;
-  border: 1px solid #fff;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
-}
-.gl-stat {
-  font-size: 13px;
-  color: #64748b;
-  font-weight: 700;
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-.gl-stat-val {
-  font-size: 24px;
-  font-weight: 900;
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-}
-.gl-stat-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: #64748b;
-}
-.text-gradient-blue {
-  background-image: linear-gradient(135deg, #2563eb, #38bdf8);
-}
-.text-gradient-purple {
-  background-image: linear-gradient(135deg, #7c3aed, #c084fc);
-}
-.text-gradient-cyan {
-  background-image: linear-gradient(135deg, #0d9488, #2dd4bf);
-}
-.gl-divider {
-  width: 1px;
-  height: 16px;
-  background: rgba(0, 0, 0, 0.1);
-  transform: rotate(15deg);
-}
-
-/* 编辑按钮 */
-.gl-btn-edit {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #ffffff;
-  color: #3b82f6;
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  padding: 12px 28px;
-  border-radius: 100px;
+.page-desc {
   font-size: 15px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
-}
-.gl-btn-edit:hover {
-  background: linear-gradient(135deg, #3b82f6, #60a5fa);
-  color: #fff;
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.3);
+  color: #64748b;
+  margin: 0;
 }
 
-/* --- 2. 核心控制台 (Bento Dashboard) --- */
-.gl-dashboard {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 24px;
-}
-@media (max-width: 860px) {
-  .gl-dashboard {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* 通用白金卡片基座 */
-.gl-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(30px) saturate(150%);
-  border: 1px solid #ffffff;
+/* ==========================================================
+   2. 通用玻璃态面板与 3D 交互 (Glassmorphism 2.0)
+   ========================================================== */
+.glass-panel {
+  position: relative;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 1);
   border-radius: 24px;
-  padding: 32px;
   box-shadow:
-    0 16px 40px rgba(15, 23, 42, 0.04),
-    0 1px 1px inset rgba(255, 255, 255, 1);
-  transition: all 0.3s ease;
-}
-.gl-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.06);
+    0 12px 32px -8px rgba(15, 23, 42, 0.04),
+    inset 0 1px 2px rgba(255, 255, 255, 1);
+  overflow: hidden;
+
+  transform-style: preserve-3d;
+  transform: perspective(1200px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0);
+  transition:
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s ease;
 }
 
-.gl-card-header {
+.glass-panel.is-clickable {
+  cursor: pointer;
+}
+
+.glass-panel::after {
+  content: '';
+  position: absolute;
+  top: var(--py, -1000px);
+  left: var(--px, -1000px);
+  width: 500px;
+  height: 500px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, transparent 60%);
+  mix-blend-mode: overlay;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.glass-panel:hover {
+  z-index: 10;
+  background: #ffffff;
+  box-shadow:
+    0 24px 48px -12px rgba(15, 23, 42, 0.08),
+    inset 0 1px 2px rgba(255, 255, 255, 1),
+    0 0 0 1px rgba(245, 158, 11, 0.1) inset;
+}
+
+.glass-panel:hover::after {
+  opacity: 1;
+}
+
+.hero-id-card.glass-panel {
+  cursor: default;
+}
+
+.id-card-content,
+.bento-header,
+.bento-body {
+  position: relative;
+  z-index: 2;
+  transform: translateZ(10px);
+}
+
+/* ==========================================================
+   3. 全息 ID 主卡片 (Hero Card)
+   ========================================================== */
+.hero-id-card {
+  padding: 40px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 247, 237, 0.8) 100%);
+}
+
+.hero-aurora {
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(251, 146, 60, 0.15) 0%, transparent 60%);
+  border-radius: 50%;
+  filter: blur(40px);
+  z-index: 0;
+}
+
+.id-card-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-}
-.gl-card-title {
-  font-size: 17px;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0;
-  letter-spacing: 0.5px;
-}
-.gl-modules-card .gl-card-title {
-  margin-bottom: 24px;
-}
-.gl-live-tag {
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 900;
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
-
-/* 资产数据 */
-.gl-rank-row {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 28px;
-}
-.gl-rank-icon {
-  font-size: 56px;
-  filter: drop-shadow(0 8px 16px rgba(245, 158, 11, 0.3));
-}
-.text-gradient-gold {
-  font-size: 28px;
-  font-weight: 900;
-  background: linear-gradient(135deg, #d97706, #fbbf24);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  margin-bottom: 4px;
-}
-.gl-rank-sub {
-  font-size: 14px;
-  color: #64748b;
-  font-weight: 700;
-}
-
-.gl-data-grid {
-  display: flex;
   flex-wrap: wrap;
-  gap: 24px;
-  background: rgba(248, 250, 252, 0.8);
-  padding: 20px 24px;
-  border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.03);
-}
-.gl-data-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.gl-data-num {
-  font-size: 22px;
-  font-weight: 900;
-  color: #0f172a;
-}
-.gl-data-desc {
-  font-size: 12px;
-  color: #94a3b8;
-  font-weight: 700;
-}
-.gl-tags {
-  display: flex;
-  gap: 6px;
-}
-.gl-mini-tag {
-  background: #fff;
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 800;
+  gap: 32px;
 }
 
-/* 快捷模块宫格 */
-.gl-bento-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-.gl-bento-item {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.03);
-  border-radius: 16px;
-  padding: 16px 20px;
+.avatar-section {
   display: flex;
   align-items: center;
-  gap: 16px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-}
-.gl-bento-item:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.05);
-  border-color: rgba(59, 130, 246, 0.2);
+  gap: 24px;
 }
 
-.gl-b-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+.avatar-ring {
+  padding: 4px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
+}
+
+.user-avatar {
+  border: 4px solid #fff;
+  background: #f1f5f9;
+  color: #94a3b8;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  color: #fff;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-}
-.bg-gradient-blue {
-  background: linear-gradient(135deg, #3b82f6, #60a5fa);
-}
-.bg-gradient-purple {
-  background: linear-gradient(135deg, #8b5cf6, #a855f7);
-}
-.bg-gradient-cyan {
-  background: linear-gradient(135deg, #0ea5e9, #2dd4bf);
-}
-.bg-gradient-orange {
-  background: linear-gradient(135deg, #f59e0b, #fbbf24);
 }
 
-.gl-b-text {
-  font-size: 15px;
-  font-weight: 800;
-  color: #1e293b;
+.user-name {
+  font-size: 28px;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0 0 12px;
 }
-
-/* --- 3. 数据流展示区 --- */
-.gl-feed-section {
-  margin-top: 16px;
-}
-.gl-tabs {
+.user-badges {
   display: flex;
-  gap: 32px;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.05);
-  padding-bottom: 16px;
-  margin-bottom: 32px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
-.gl-tab {
+.badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 100px;
+  letter-spacing: 0.5px;
+}
+.level-badge {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+.team-badge {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.stats-section {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 16px 24px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 1);
+  flex-wrap: wrap;
+}
+
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+}
+.stat-box:hover {
+  transform: scale(1.05);
+}
+.stat-num {
+  font-size: 24px;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
+.stat-divider {
+  width: 1px;
+  height: 32px;
+  background: #e2e8f0;
+}
+
+.btn-edit-profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f1f5f9;
+  color: #334155;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 16px;
+}
+.btn-edit-profile:hover {
+  background: #ea580c;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2);
+}
+
+/* ==========================================================
+   4. Bento Grid (网格模块区)
+   ========================================================== */
+.bento-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: minmax(180px, auto);
+}
+
+@media (min-width: 900px) {
+  .bento-game-card {
+    grid-column: span 2;
+  }
+  .bento-interest-card {
+    grid-column: span 1;
+  }
+  .bento-buddy-card {
+    grid-column: span 2;
+  }
+  .bento-post-card {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 899px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+  }
+  .bento-game-card,
+  .bento-interest-card,
+  .bento-buddy-card,
+  .bento-post-card {
+    grid-column: span 1;
+  }
+}
+
+.bento-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bento-game-card.glass-panel,
+.bento-buddy-card.glass-panel {
+  cursor: default;
+}
+
+.bento-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.bento-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+.bento-title .el-icon {
+  color: #f59e0b;
+  font-size: 18px;
+}
+
+.bento-action {
   background: transparent;
   border: none;
   color: #94a3b8;
-  font-size: 16px;
-  font-weight: 800;
-  padding: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s;
+  font: inherit;
 }
-.gl-tab:hover {
-  color: #475569;
-}
-.gl-tab.is-active {
-  color: #0f172a;
-}
-.gl-tab.is-active::after {
-  content: '';
-  position: absolute;
-  bottom: -18px;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-  border-radius: 4px 4px 0 0;
+.bento-card:hover .bento-action {
+  color: #ea580c;
 }
 
-/* 空状态 */
-.gl-empty-state {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px);
-  border: 1px dashed rgba(0, 0, 0, 0.1);
-  border-radius: 24px;
-  padding: 80px 24px;
+.bento-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.game-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.identity-rank {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+  color: #0f172a;
+}
+.role-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.role-chip {
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 100px;
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+.interest-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.interest-line {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.buddy-snippet {
+  margin: 0;
+  font-size: 14px;
+  color: #334155;
+  line-height: 1.6;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.empty-hint {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  gap: 12px;
 }
-.gl-empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.1));
+.hint-icon {
+  font-size: 32px;
+  opacity: 0.8;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
 }
-.gl-empty-text {
-  font-size: 15px;
+.empty-hint p {
+  margin: 0;
+  font-size: 14px;
   color: #64748b;
   font-weight: 600;
-  margin-bottom: 24px;
-  max-width: 400px;
-  line-height: 1.6;
 }
-.gl-btn-primary {
-  background: linear-gradient(135deg, #3b82f6, #60a5fa);
-  color: #fff;
-  border: none;
-  padding: 12px 32px;
+
+.btn-ghost {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fcd34d;
+  padding: 8px 16px;
   border-radius: 100px;
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 800;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+  transition: all 0.2s;
+  font: inherit;
 }
-.gl-btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.4);
+.btn-ghost:hover {
+  background: #f59e0b;
+  color: #fff;
+}
+
+.text-link {
+  font-size: 13px;
+  font-weight: 800;
+  color: #38bdf8;
+  transition: color 0.2s;
+}
+.bento-card:hover .text-link {
+  color: #0284c7;
+}
+
+.buddy-list-empty {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.6;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+  text-align: center;
+}
+.buddy-list-empty strong {
+  color: #ea580c;
+  cursor: pointer;
+}
+
+.stats-huge {
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-bottom: 12px;
+}
+.huge-num {
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+.huge-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #94a3b8;
 }
 
 @media (max-width: 720px) {
-  .gl-hero-glass {
+  .id-card-content {
     flex-direction: column;
     align-items: flex-start;
-    padding: 28px 24px;
   }
 
-  .gl-action-zone {
+  .stats-section {
     width: 100%;
   }
 
-  .gl-btn-edit {
+  .btn-edit-profile {
     width: 100%;
+    margin-left: 0;
     justify-content: center;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .orb-1,
-  .orb-2 {
-    animation: none;
+  .glass-panel {
+    transform: perspective(1200px) rotateX(0) rotateY(0) translateZ(0);
   }
 
-  .gl-avatar-ring {
-    animation: none;
+  .glass-panel:hover {
+    transform: none;
   }
 
-  .gl-card:hover,
-  .gl-bento-item:hover,
-  .gl-btn-edit:hover,
-  .gl-btn-primary:hover {
-    transform: none !important;
+  .stat-box:hover {
+    transform: none;
   }
 }
 </style>
